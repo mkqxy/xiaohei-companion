@@ -1,0 +1,30 @@
+name: Windows build
+on:
+  workflow_dispatch:
+  push:
+    branches: ['**']
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build portable application
+        shell: powershell
+        run: .\Build.ps1
+      - name: Test application
+        shell: powershell
+        run: .\Test.ps1
+      - name: Test native installer in isolated directories
+        shell: powershell
+        run: .\scripts\Test-Installer.ps1
+      - name: Package release candidates
+        shell: powershell
+        run: .\scripts\Package-Release.ps1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Xiaohei-release-candidates
+          path: releases/*
+          if-no-files-found: error

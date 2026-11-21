@@ -1,0 +1,56 @@
+name: Publish Windows release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing version tag, for example v3.8.0'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.event.inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    env:
+      RELEASE_TAG: ${{ github.event.inputs.tag || github.ref_name }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref_name }}
+      - name: Validate selected version tag
+        shell: powershell
+        run: |
+          $version = (Get-Content -LiteralPath VERSION -Raw).Trim()
+          if ($env:RELEASE_TAG -ne ('v' + $version)) {
+            throw 'The selected tag must match VERSION.'
+          }
+      - name: Build Windows desktop companion
+        shell: powershell
+        run: .\Build.ps1
+      - name: Test Windows desktop companion
+        shell: powershell
+        run: .\Test.ps1
+      - name: Test native installer
+        shell: powershell
+        run: .\scripts\Test-Installer.ps1
+      - name: Package release downloads
+        shell: powershell
+        run: .\scripts\Package-Release.ps1 -GroupShare
+      - name: Prepare and publish versioned release
+        shell: powershell
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          .\scripts\Publish-Release.ps1 -Repository $env:GITHUB_REPOSITORY -IncludeSource -IncludeNative -Publish

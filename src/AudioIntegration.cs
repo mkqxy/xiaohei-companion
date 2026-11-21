@@ -1,0 +1,93 @@
+using System;
+using System.IO;
+using System.Windows;
+using System.Windows.Automation;
+using System.Windows.Controls;
+
+namespace XiaoheiDesktop {
+public sealed partial class PetWindow {
+    internal readonly PetAudio audio = new PetAudio(Path.Combine(Store.Dir,"sounds"));
+
+    void UpdateAudioSettings() {
+        audio.Enabled = Pref.SoundEnabled;
+        audio.Volume = Pref.SoundVolume;
+        Pref.SoundVolume = audio.Volume;
+        audio.Suppressed = Pref.Quiet || Companion.Sleeping || Timer.Running || !IsVisible;
+    }
+
+    public bool PlaySound(string cue) {
+        UpdateAudioSettings();
+        return audio.Play(cue);
+    }
+    void RespondAsCat(string cue) {
+        if(!art.HumanForm && !art.UsingCustomSkin)PlaySound(cue);
+    }
+
+    public void SetSoundEnabled(bool enabled) {
+        Pref.SoundEnabled = enabled;
+        UpdateAudioSettings();
+        Save();
+    }
+
+    public void SetSoundVolume(double volume) {
+        Pref.SoundVolume = volume;
+        UpdateAudioSettings();
+        scaleSave.Stop();
+        scaleSave.Start();
+    }
+
+    public bool PreviewSound(string cue="pet") {
+        UpdateAudioSettings();
+        return audio.Play(cue, true);
+    }
+}
+
+public sealed partial class PocketWindow {
+    FrameworkElement AudioSettings() {
+        var sound = UI.Stack();
+        sound.Children.Add(UI.Heading("小黑的声音"));
+        sound.Children.Add(UI.Check("互动音效", pet.Pref.SoundEnabled, pet.SetSoundEnabled));
+        var level = UI.Text("", 12, UI.Muted);
+        var volume = new Slider {
+            Minimum = 0, Maximum = 100, Value = pet.Pref.SoundVolume * 100,
+            TickFrequency = 1, IsSnapToTickEnabled = true,
+            Margin = new Thickness(0, 7, 0, 8)
+        };
+        AutomationProperties.SetName(volume, "音效音量");
+        Action display = delegate {level.Text = "音量  " + Math.Round(volume.Value) + "%";};
+        volume.ValueChanged += delegate {pet.SetSoundVolume(volume.Value / 100);display();};
+        display();
+        sound.Children.Add(level);
+        sound.Children.Add(volume);
+        sound.Children.Add(UI.Text("长按小黑听呼噜，散步时安静。", 12, UI.Muted));
+        var cues=new[]{"cat-answer","pet","heyxiu","snack","focus-complete"};
+        var pick=new ComboBox{ItemsSource=new[]{"小黑应声","长按呼噜","嘿咻回应","咬小鱼干","专注结束"},SelectedIndex=0,Margin=new Thickness(0,9,0,0)};
+        AutomationProperties.SetName(pick,"选择互动声音");
+        Func<string> selected=delegate{return cues[pick.SelectedIndex];};
+        sound.Children.Add(pick);
+        var preview = UI.Button("听听小黑的声音", delegate {pet.PreviewSound(selected());}, false);
+        preview.Margin = new Thickness(0, 9, 0, 0);
+        sound.Children.Add(preview);
+        var status=UI.Text("",12,UI.Muted);
+        Button restore=null;
+        restore=UI.Button("恢复内置声音",delegate {
+            try { pet.audio.RestoreClip(selected());restore.IsEnabled=false;status.Text="已恢复内置声音"; }
+            catch(Exception e) {status.Text="恢复失败："+e.Message;}
+        },false);
+        Action refresh=delegate{bool custom=pet.audio.HasClip(selected());restore.IsEnabled=custom;status.Text=custom?"正在使用你选的声音":"正在使用内置声音";};
+        var import=UI.Button("换成本地 WAV",delegate {
+            var dialog=new Microsoft.Win32.OpenFileDialog{Title="选择 5 秒以内的 16 位 PCM WAV",Filter="WAV 短音效 (*.wav)|*.wav"};
+            if(dialog.ShowDialog(this)!=true)return;
+            try {pet.audio.ImportClip(selected(),dialog.FileName);refresh();pet.PreviewSound(selected());}
+            catch(Exception e) {status.Text="未能导入："+e.Message;}
+        },false);
+        pick.SelectionChanged+=delegate{refresh();};
+        var buttons=new System.Windows.Controls.Primitives.UniformGrid{Columns=2,Margin=new Thickness(0,6,0,6)};
+        buttons.Children.Add(import);buttons.Children.Add(restore);
+        var more=UI.Stack();more.Children.Add(buttons);more.Children.Add(status);
+        sound.Children.Add(new Expander{Header="自定义声音",Content=more,Margin=new Thickness(0,8,0,0)});
+        refresh();
+        return UI.Card(sound);
+    }
+}
+}

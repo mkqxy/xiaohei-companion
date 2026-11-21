@@ -1,0 +1,38 @@
+﻿<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>小黑搭子 · 离线编辑器</title><link rel="stylesheet" href="style.css"></head>
+<body>
+<header class="top"><a class="brand" href="#"><span class="brand-mark">小</span><span>小黑搭子 <small>COMPANION STUDIO</small></span></a><div class="header-note">离线可用 <span>·</span> 不上传你的文件</div><span class="version">3.8</span></header>
+<main>
+ <section class="intro"><div><p class="eyebrow">MAKE A LITTLE COMPANY</p><h1>把陪伴，调成你的样子。</h1><p>用真实动画试动作、改台词，再把设置带回桌面。</p></div><div class="intro-meta">9 类动画<br>16 个视线方向</div></section>
+ <div class="workspace">
+  <section class="preview-panel" aria-label="动画预览">
+   <div class="panel-heading"><span><i class="live-dot"></i> 动画预览</span><span id="frameInfo">正在载入</span></div>
+   <div class="stage" id="stage"><canvas id="petCanvas" width="680" height="580" aria-label="小黑和嘿咻的真实动画"></canvas><div class="speech" id="speech">你忙你的，我在这里陪你。</div><div class="stage-caption"><span id="previewName">小黑和嘿咻</span><span>嘿咻也在</span></div></div>
+   <div class="preview-footer"><div class="backgrounds" aria-label="预览背景"><button data-theme="paper" class="swatch paper selected" aria-label="纸白背景"></button><button data-theme="mint" class="swatch mint" aria-label="薄荷背景"></button><button data-theme="night" class="swatch night" aria-label="夜色背景"></button><button data-theme="alpha" class="swatch alpha" aria-label="透明棋盘背景"></button></div><div><button id="pause" class="subtle">暂停</button><button id="saveImage" class="subtle">保存预览图</button></div></div>
+   <section class="actions-section"><div class="section-title"><h2>先逗它一下</h2><span>点选就能播放</span></div><div class="animation-grid" id="animationButtons"></div><div class="fine-controls"><label><input type="checkbox" id="movement" checked> 跑步时移动</label><label><input type="checkbox" id="follow"> 跟随预览区的鼠标视线</label></div></section>
+   <div class="native-tip"><strong>在 Codex 原生萌宠中</strong><p>按住小黑左右拖动会触发跑步。任务状态由应用管理；这里的动作按钮和自定义台词用于独立桌面版。</p></div>
+  </section>
+  <aside class="settings-panel">
+   <div class="section-title"><h2>你的陪伴设定</h2><span>无需改代码</span></div>
+   <label class="field">名字<input id="name" maxlength="24" value="小黑和嘿咻"></label>
+   <label class="field">见面时说什么<textarea id="greeting" maxlength="160" rows="2">你忙你的，我在这里陪你。</textarea></label>
+   <label class="field">动作速度 <output id="speedValue">1.00×</output><input id="speed" type="range" min="0.5" max="2" step="0.05" value="1"></label>
+   <div class="two-fields"><label class="field">桌面大小<input id="scale" type="number" min="0.28" max="1" step="0.02" value="0.36"></label><label class="field">专注时长 / 分钟<input id="focusMinutes" type="number" min="1" max="180" value="25"></label></div>
+   <label class="field">喝水提醒<select id="waterMinutes"><option value="0">关闭</option><option value="30">每 30 分钟</option><option value="45">每 45 分钟</option><option value="60">每 60 分钟</option></select></label>
+   <div class="check-row"><label><input id="roaming" type="checkbox"> 自动散步</label><label><input id="quiet" type="checkbox"> 安静陪伴</label><label><input id="autoExpressions" type="checkbox" checked> 偶尔做动作</label></div>
+   <div class="divider"></div>
+   <div class="section-title"><h2>自定义小动作</h2><button id="addAction" class="text-button">＋ 添加</button></div><p class="muted small">按钮名称、动画和台词都可以自己写。仅播放动画与文字，不执行脚本。</p><div id="customActions"></div>
+   <div class="divider"></div>
+   <h2>换成自己的皮肤</h2><p class="muted small">导入 1536 × 2288 的透明 PNG 图集。图片只留在当前浏览器；在桌面版中还需单独导入同一张 PNG。</p>
+   <label class="upload">选择自己的 PNG<input id="atlasFile" type="file" accept="image/png"></label><button id="defaultAtlas" class="text-button">恢复小黑皮肤</button>
+   <p class="asset-note">罗小黑同人形象 · 非官方作品<br>程序代码开放许可不包含角色素材权利。</p>
+   <div class="divider"></div>
+   <div class="export-buttons"><button id="exportProfile" class="primary">导出个性化设置</button><label class="upload compact">导入设置<input id="profileFile" type="file" accept="application/json,.json"></label></div><p class="muted small">在桌面版「设置」中导入 JSON，即可应用名字、台词和动作设置。</p>
+  </aside>
+ </div>
+ <div id="notice" role="status" aria-live="polite">编辑器已就绪；设置不会自动保存，请导出后保留。</div>
+ <footer>本地运行 · 没有账号、网络请求或遥测 <span>小黑和嘿咻 / AI 辅助绘制动画</span></footer>
+</main>
+<script src="default-sprite.js"></script><script src="editor.js"></script>
+</body></html>
