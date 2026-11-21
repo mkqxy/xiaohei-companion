@@ -1,0 +1,15 @@
+dist/
+build/
+releases/
+*.user
+*.suo
+*.log
+*.tmp
+*.bak
+settings.json
+note.txt
+profile.json
+custom-spritesheet.png
+.DS_Store
+Thumbs.db
+!profiles/default.json

@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "name": "小黑和嘿咻",
+  "greeting": "你忙你的，我在这里陪你。",
+  "animationSpeed": 1.0,
+  "scale": 0.36,
+  "roaming": false,
+  "quiet": false,
+  "focusMinutes": 25,
+  "waterMinutes": 0,
+  "autoExpressions": true,
+  "customActions": [
+    {"label": "跟你打招呼", "animation": "waving", "message": "嗨，今天也一起慢慢来。"},
+    {"label": "小小庆祝", "animation": "jumping", "message": "好耶，完成了一件小事！"},
+    {"label": "陪我专注", "animation": "running", "message": "我陪你专注一会儿。"}
+  ]
+}
