@@ -64,3 +64,7 @@
 原生版本需要同样的 v2 图集和清单，包含唯一 ID、名字、说明、`spriteVersionNumber: 2`、相对 `spritesheetPath`。改变清单名字不等于改变图片。请为新角色使用独立目录和 ID，避免覆盖现有角色。
 
 本项目内置安装器只安装随包的 `xiaohei-heixiu`，不会扫描未知皮肤并自动执行它们。开发者如扩展安装器，应继续校验清单和相对路径，保留旧文件并避免改账号或应用全局状态。
+
+### 无限的动作原画
+
+在源码的 assets/wuxian 中，full.png 是伸掌，catch.png 是低头接住小黑。保留现有姿态和画布比例时，可以直接给两张透明原画重新上色。安装 Pillow、NumPy、SciPy 后运行 python scripts/build_mentor_poses.py，会生成内置的六帧 mentor.png。改变姿势时也要调整脚本里的轮廓定位点。最后运行 Build.ps1 重新构建桌宠。

@@ -1,6 +1,7 @@
 using System;
 using System.Windows;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 
 namespace XiaoheiDesktop {
 public sealed partial class PetWindow {
@@ -84,16 +85,16 @@ public sealed partial class PetArt {
         // settles in the crook of his arm, then springs back to the ground.
         double up=Ease((t-1.22)/.84),down=Ease((t-3.55)/.82),held=up*(1-down);
         double arc=Math.Sin(Math.PI*up)+Math.Sin(Math.PI*down);
-        double catX=142-40*held,catY=200-80*held-29*arc;
+        double catX=142-58*held,catY=200-123*held-24*arc;
         if(HumanForm){
-            d.PushTransform(new TranslateTransform(80,52));
-            d.PushTransform(new ScaleTransform(.74,.74));
+            d.PushTransform(new TranslateTransform(86,77));
+            d.PushTransform(new ScaleTransform(.61,.61));
             DrawBoy(d,false);d.Pop();d.Pop();
         } else {
             double squash=1-.055*Math.Sin(Math.PI*Unit((t-2.06)/.17))-.073*Math.Sin(Math.PI*Unit((t-4.37)/.20));
             d.PushTransform(new TranslateTransform(catX,catY));
             d.PushTransform(new RotateTransform(-6*arc+4.2*held));
-            double scale=.48-.09*held;
+            double scale=.39-.17*held;
             d.PushTransform(new ScaleTransform(scale,scale*squash));
             d.PushTransform(new TranslateTransform(-96,-199));
             double tucked=Ease((held-.27)/.67);
@@ -108,14 +109,9 @@ public sealed partial class PetArt {
             d.Pop();d.Pop();d.Pop();d.Pop();
             DrawHeyxiuBody(d,new Point(162,196),.43,.94,1,0,0);
         }
-        if(!HumanForm && held>.05) {
-            d.PushOpacity(held);
-            Path(d,"M79,109 Q84,113 92,111 L99,108 Q102,107 102,109 Q99,113 94,115 Q85,118 78,114 Z","#EDCDBB","#262D36",1.25);
-            d.Pop();
-        }
         double travel=Ease((t-.76)/.52)*(1-Ease((t-3.2)/1.04));
         if(t>.75 && t<4.25){
-            double ringX=72+50*travel,ringY=97-21*Math.Sin(Math.PI*travel)-6*travel;
+            double ringX=89+37*travel,ringY=64-15*Math.Sin(Math.PI*travel)-5*travel;
             d.PushTransform(new RotateTransform(-24+87*travel,ringX,ringY));
             E(d,ringX,ringY,6.8,2.7,null,"#314854",2.4);
             E(d,ringX,ringY-.5,6.1,2.3,null,"#D5E6E5",1.1);
@@ -141,43 +137,33 @@ public sealed partial class PetArt {
         d.Pop();
     }
 
-    // Three-quarter pose facing the pet: centre part, indigo hair, crossed
-    // pale collar, double waist cord, wide sleeves and ankle-length robe.
-    static void DrawMaster(DrawingContext d,double t,double catchPose,bool greeting) {
-        const string edge="#282D36",skin="#EFCCB8",blue="#719AAB";
-        double breath=Math.Sin(t*3)*.46;
-        d.PushTransform(new RotateTransform(-.9+2.6*catchPose,53,191));
-        Path(d,"M34,118 Q48,113 68,117 L72,162 Q76,178 65,186 L54,186 L51,146 Q50,174 45,187 L32,188 Q20,179 24,160 Z",blue,edge,1.8);
-        Path(d,"M31,184 L45,184 L44,196 Q39,200 27,199 Q24,197 29,193 Z M54,183 L66,182 L67,191 Q71,194 75,195 Q77,198 74,199 L55,198 Z","#414C55",edge,1.7);
-        Path(d,"M31,185 L44,184 L43,190 L30,192 Z M55,183 L66,183 L67,190 L55,190 Z","#DDE4DF",edge,1.1);
-        d.PushTransform(new TranslateTransform(0,breath));
-        const string navy="#394E71", robe="#7698A2", inner="#CFD8DE", ink="#242E36";
-        Path(d,"M30,26 Q29,12 41,9 Q56,4 63,14 Q69,21 66,40 Q65,58 60,72 Q57,83 49,86 Q39,87 26,80 Q30,66 29,53 Z",navy,ink,1.55);
-        Path(d,"M27,80 Q38,86 49,84 L48,87 Q36,88 27,84 Z",inner,ink,.7);
-        Path(d,"M31,86 Q36,88 40,88 Q34,122 23,144 Q28,126 31,86 Z",navy,ink,1);
+    static readonly Lazy<BitmapSource[]> mentorPoses = new Lazy<BitmapSource[]>(LoadMentorPoses);
 
-        // Long outer panels and the relaxed arm folded behind his back.
-        Path(d,"M32,61 Q21,62 17,78 Q11,99 18,113 Q23,124 29,125 L22,186 Q34,192 47,188 L62,188 L73,186 L66,113 L68,74 Q64,63 54,60 Z",robe,ink,1.7);
-        Path(d,"M36,64 L47,59 L59,62 L65,71 L60,109 L65,186 Q52,189 40,187 L43,111 Z",inner,ink,1.25);
-        Path(d,"M42,55 L55,53 L58,65 L49,77 L40,65 Z",skin,ink,1);
-        Path(d,"M38,61 L42,59 L55,76 L51,83 Z M58,61 L63,65 Q59,79 42,98 L38,100 Q48,82 58,61 Z",inner,ink,1.35);
-        Path(d,"M28,110 Q44,106 66,108 L66,112 Q45,110 28,114 Z","#364857",ink,1);
-        Path(d,"M28,114 Q46,110 66,112 L66,115 Q48,113 28,117 Z",inner,ink,.8);
-        Path(d,"M62,113 Q65,111 65,116 L67,140 M63,115 L63,134 M21,87 Q21,104 29,108",null,ink,1);
-        d.PushTransform(new RotateTransform(18*catchPose+(greeting?4*Math.Sin(t*5):0),58,84));
-        Path(d,"M60,65 Q70,64 72,76 L73,90 L81,88 L86,99 Q76,106 62,108 Q54,107 53,101 Q53,96 57,88",robe,ink,1.6);
-        Path(d,"M80,89 Q82,87 84,87 L88,97 L85,100 Z",inner,ink,1);
-        Path(d,"M84,88 L90,85 Q93,84 91,88 L89,90 L96,88 Q99,89 96,92 L89,96 L87,97 Z",skin,ink,1);
-        d.Pop();
-        d.PushTransform(new RotateTransform(-1+10*catchPose,49,58));
-        Path(d,"M36,23 Q43,18 50,21 L54,23 L61,20 Q65,24 65,32 L64,43 Q61,52 53,55 Q46,55 39,48 Q32,41 36,23 Z","#EBD0C2",ink,1.15);
-        Path(d,"M30,38 Q30,15 40,12 Q48,9 52,12 Q56,11 61,15 Q65,18 66,25 L62,21 L54,23 Q48,19 42,21 Q40,31 40,43 Q40,54 43,61 L39,59 L40,62 Q31,58 31,50 Z",navy,ink,1.15);
-        Path(d,"M61,20 Q67,20 67,32 Q68,51 61,60 L62,54 L59,58 Q64,41 61,20 Z",navy,ink,1);
-        Path(d,"M42,30 Q46,29 51,31 L51,32 Q46,31 42,31 Z M55,31 Q59,29 62,29 L62,30.6 L55,32 Z",ink,ink,.55);
-        Path(d,"M42,34 L51,34.8 Q49,39 46,38 Q43,37 42,34 Z M55,34.6 L62,33.8 Q61,37.5 58,38 Q56,37.8 55,34.6 Z","#F2EAE1",null,0);
-        Path(d,"M45,34.5 L50,34.8 Q49.8,38.2 47.3,38 Q45,38 45,34.5 Z M57,34.5 L61,34 Q61,37.6 58.8,37.6 Q57,37.6 57,34.5 Z","#637F80",ink,.6);
-        Path(d,"M42,34 Q46,33.7 51,34.8 M55,34.6 L62,33.8 M53,38 L54,41 L53,42 M49,46 Q52,47 55,45.8",null,ink,.9);
-        d.Pop();d.Pop();d.Pop();
+    static BitmapSource[] LoadMentorPoses() {
+        using(var stream=typeof(PetArt).Assembly.GetManifestResourceStream("Xiaohei.Mentor.png")) {
+            var atlas=new BitmapImage();
+            atlas.BeginInit();
+            atlas.CacheOption=BitmapCacheOption.OnLoad;
+            atlas.StreamSource=stream;
+            atlas.EndInit();
+            atlas.Freeze();
+            var poses=new BitmapSource[6];
+            int width=atlas.PixelWidth/poses.Length;
+            for(int i=0;i<poses.Length;i++) {
+                var cel=new CroppedBitmap(atlas,new Int32Rect(i*width,0,width,atlas.PixelHeight));
+                cel.Freeze();
+                poses[i]=cel;
+            }
+            return poses;
+        }
+    }
+
+    static void DrawMaster(DrawingContext d,double t,double catchPose,bool greeting) {
+        var poses=mentorPoses.Value;
+        double tilt=greeting?.68*Ease((t-.48)/.66)*(1-Ease((t-3)/.85)):catchPose;
+        int frame=(int)Math.Round(tilt*(poses.Length-1));
+        double breath=.34*Math.Sin(t*2.7);
+        d.DrawImage(poses[frame],new Rect(16,2+breath,85.8,197-breath));
     }
 }
 }

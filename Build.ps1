@@ -26,6 +26,7 @@ foreach ($line in @('human-hello','human-master')) {
     $recording = Join-Path $PSScriptRoot ('assets\sound\' + $line + '.wav')
     $arguments += '/resource:' + $recording + ',Xiaohei.' + $line + '.wav'
 }
+$arguments += '/resource:' + (Join-Path $PSScriptRoot 'assets\wuxian\mentor.png') + ',Xiaohei.Mentor.png'
 $sources = @(Get-ChildItem -LiteralPath $sourceRoot -Filter '*.cs' -File | Sort-Object Name)
 if ($sources.Count -eq 0) { throw 'No C# sources were found.' }
 $arguments += @($sources.FullName)

@@ -86,7 +86,7 @@ $sourceStage = Join-Path $sourceContainer $sourceName
 New-Item -ItemType Directory -Path $sourceStage -Force | Out-Null
 foreach ($name in @('Build.ps1','Test.ps1','Install-Native.cmd','Start-Companion.cmd','README.md','LICENSE','ASSET_NOTICE.md','VERSION','.gitignore')) { Copy-RootFile $name $sourceStage }
 foreach ($folder in @('src','tests','scripts','docs','assets','native','profiles','editor','.github')) {
-    Copy-AllowedFiles (Join-Path $projectRoot $folder) (Join-Path $sourceStage $folder) @('.wav','.cs','.ps1','.md','.json','.png','.webp','.gif','.mp4','.jpg','.jpeg','.html','.js','.css','.ico','.manifest','.yml','.yaml','.txt')
+    Copy-AllowedFiles (Join-Path $projectRoot $folder) (Join-Path $sourceStage $folder) @('.wav','.cs','.ps1','.py','.md','.json','.png','.webp','.gif','.mp4','.jpg','.jpeg','.html','.js','.css','.ico','.manifest','.yml','.yaml','.txt')
 }
 Copy-Previews $sourceStage $releasePreviews
 
