@@ -14,6 +14,8 @@
 
 **[下载 Windows 桌面版](https://github.com/mkqxy/xiaohei-companion/releases/latest/download/Xiaohei-Windows.zip)** · [下载 Codex 原生外观](https://github.com/mkqxy/xiaohei-companion/releases/latest/download/Xiaohei-Codex-Pet.zip) · [版本说明和源码](https://github.com/mkqxy/xiaohei-companion/releases/latest)
 
+给朋友转发的[两页下载与玩法指南（PDF）](https://raw.githubusercontent.com/mkqxy/xiaohei-companion/main/docs/download-guide.pdf)带有固定下载按钮和二维码。
+
 Windows 桌面版适合直接使用。右键旧版小黑，选「退出小黑」，再将 ZIP 全部解压到普通文件夹，双击「启动小黑.cmd」。已有的随手记和设置继续保存在原来的用户目录。
 
 如果想让 Codex 原生浮窗显示小黑、跟随任务状态，选 `小黑-Codex原生外观.zip`。双击安装脚本后，按下面的「原生版」步骤在应用中选中小黑。
