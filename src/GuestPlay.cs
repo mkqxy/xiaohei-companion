@@ -53,6 +53,8 @@ public sealed class GuestPlayWindow : Window {
     readonly int[] hidingPlaces = { 0, 1, 2 };
     int finds;
     double lastAction = -10, finishAt = double.PositiveInfinity;
+    string contactCue;
+    double contactTime;
 
     public GuestPlayWindow(PetWindow pet, bool hunt, bool pocketOnRight)
         : this(pet,hunt?GuestKind.Heyxiu:GuestKind.Tabby,pocketOnRight) {}
@@ -128,12 +130,12 @@ public sealed class GuestPlayWindow : Window {
                 pet.Say("找到了 " + finds + " / 3！看看另一边。", 4, true);
             }
         } else if(Kind==GuestKind.Bidiu) {
-            pet.PlaySound("snack");
+            contactCue="snack";contactTime=now+.65;
             pet.PlayAnimation("review",null);
             pet.Say(art.Interactions%2==1 ? "绿球进肚，毛也变绿啦！" : "一口茄子……紫色的比丢！",3,true);
         } else {
             bool rub=art.Interactions%2==0;
-            if(rub)pet.PlaySound("pet");
+            contactCue=rub?"pet":null;contactTime=now+.35;
             pet.PlayAnimation(rub ? "waiting" : "jumping", null);
             pet.Say(rub ? "小皇又挨过来了。" : "接住啦，小皇！", 3, true);
         }
@@ -150,6 +152,10 @@ public sealed class GuestPlayWindow : Window {
         Place(now);
         art.Clock = now;
         art.ReactionAge = now - lastAction;
+        if(contactCue!=null && now>=contactTime) {
+            string cue=contactCue;contactCue=null;
+            if(now-contactTime<.26)pet.PlaySound(cue);
+        }
         art.Arriving = !hunt && now < 1.15;
         art.Celebrating = hunt && finds == 3;
         art.InvalidateVisual();

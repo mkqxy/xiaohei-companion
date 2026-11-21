@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Controls;
@@ -29,7 +29,7 @@ public sealed partial class PetWindow {
         if (Double.IsNaN(scale)||Double.IsInfinity(scale)) scale=.36;
         Pref.Scale=Math.Min(1,Math.Max(.28,scale));
         Profile.scale=Pref.Scale;
-        UpdateFormLayout(art.HumanForm||art.IsChangingForm);
+        UpdateFormLayout(art.HumanForm||art.MasterActive||art.IsChangingForm);
         if (!initialized) return;
         if(saveNow) Save();
         else {scaleSave.Stop();scaleSave.Start();}

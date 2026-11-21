@@ -22,6 +22,10 @@ $executable = Join-Path $outputRoot 'XiaoheiCompanion.exe'
 $arguments = @('/nologo','/target:winexe','/platform:anycpu','/optimize+','/utf8output','/codepage:65001','/langversion:5',('/out:' + $executable),('/win32manifest:' + (Join-Path $sourceRoot 'app.manifest')),('/resource:' + $atlas + ',Xiaohei.DefaultAtlas.png')) + $references
 if (Test-Path -LiteralPath (Join-Path $sourceRoot 'pet.ico')) { $arguments += '/win32icon:' + (Join-Path $sourceRoot 'pet.ico') }
 $arguments += '/resource:' + $catVoice + ',Xiaohei.CatAnswer.wav'
+foreach ($line in @('human-hello','human-master')) {
+    $recording = Join-Path $PSScriptRoot ('assets\sound\' + $line + '.wav')
+    $arguments += '/resource:' + $recording + ',Xiaohei.' + $line + '.wav'
+}
 $sources = @(Get-ChildItem -LiteralPath $sourceRoot -Filter '*.cs' -File | Sort-Object Name)
 if ($sources.Count -eq 0) { throw 'No C# sources were found.' }
 $arguments += @($sources.FullName)

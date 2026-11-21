@@ -15,6 +15,7 @@ public sealed class PetAudio : IDisposable {
     readonly Stopwatch clock = Stopwatch.StartNew();
     readonly Dictionary<string, byte[]> waves = new Dictionary<string, byte[]>();
     readonly string soundDirectory;
+    string lastCue;
     SoundPlayer player;
     MemoryStream stream;
     bool enabled = true, suppressed, disposed;
@@ -115,21 +116,17 @@ public sealed class PetAudio : IDisposable {
 
     // Explicit preview can be heard while the pet is quiet or focusing. Muting
     // and a zero volume still apply. A single active sound prevents layering.
-    public bool Play(string cue, bool preview=false) {
+    public bool Play(string cue, bool preview=false,bool capture=false) {
         lock(gate) {
-            if(disposed || !enabled || volume<=0 || (suppressed && !preview)) return false;
+            if(disposed || (!capture && (!enabled || volume<=0)) || (suppressed && !preview)) return false;
             if(Duration(cue)<=0) return false;
             double now=clock.Elapsed.TotalSeconds;
-            if(!preview && cue!="focus-complete" && now-lastPlayedAt<CooldownSeconds) return false;
+            if(!preview && cue==lastCue && cue!="focus-complete" && now-lastPlayedAt<CooldownSeconds) return false;
+            if(capture){lastPlayedAt=now;lastCue=cue;return true;}
             try {
                 byte[] wave;
                 if(!waves.TryGetValue(cue,out wave)) {
-                    wave=null;
-                    if(HasClip(cue)) {
-                        try { wave=ReadClip(ClipPath(cue),volume); }
-                        catch(IOException) {} catch(InvalidDataException) {} catch(UnauthorizedAccessException) {}
-                    }
-                    if(wave==null) wave=BuildWave(cue,volume);
+                    wave=LoadWave(cue,volume);
                     waves.Add(cue,wave);
                 }
                 StopCore();
@@ -139,7 +136,7 @@ public sealed class PetAudio : IDisposable {
                 // WinMM's asynchronous path and never waits for the sound to end.
                 player.Load();
                 player.Play();
-                lastPlayedAt=now;
+                lastPlayedAt=now;lastCue=cue;
                 return true;
             } catch(Exception error) {
                 if(error is OutOfMemoryException) throw;
@@ -150,6 +147,29 @@ public sealed class PetAudio : IDisposable {
     }
 
     public void Stop() { lock(gate) StopCore(); }
+
+    byte[] LoadWave(string cue,double gain) {
+        if(HasClip(cue)) {
+            try { return ReadClip(ClipPath(cue),gain); }
+            catch(IOException) {} catch(InvalidDataException) {} catch(UnauthorizedAccessException) {}
+        }
+        return BuildWave(cue,gain);
+    }
+    // 25 amplitude samples per second match the desktop render timer. Compute
+    // them from the selected recording so replacement speech also lip-syncs.
+    public double[] MouthTrack(string cue) {
+        byte[] wave=LoadWave(cue,1);
+        int rate=BitConverter.ToInt32(wave,24), channels=BitConverter.ToInt16(wave,22);
+        int stride=Math.Max(1,rate/25)*channels*2;
+        var levels=new double[(wave.Length-44+stride-1)/stride];
+        for(int i=0;i<levels.Length;i++) {
+            int start=44+i*stride,end=Math.Min(wave.Length,start+stride);
+            double energy=0;
+            for(int j=start;j<end;j+=2){double value=BitConverter.ToInt16(wave,j)/32768.0;energy+=value*value;}
+            levels[i]=Math.Max(0,Math.Min(1,(Math.Sqrt(energy*2/(end-start))-.012)*11));
+        }
+        return levels;
+    }
 
     void StopCore() {
         if(player!=null) {
@@ -179,6 +199,8 @@ public sealed class PetAudio : IDisposable {
         switch(cue) {
             case "pet": return 1.16;
             case "cat-answer": return 1.5; // Length of the embedded clip is read from its header.
+            case "human-hello": return 2.62;
+            case "human-master": return .45;
             case "heyxiu": return .30;
             case "snack": return .31;
             case "focus-complete": return .70;
@@ -192,8 +214,9 @@ public sealed class PetAudio : IDisposable {
         double duration=Duration(cue);
         if(duration<=0) return null;
         volume=NormalizeVolume(volume);
-        if(cue=="cat-answer") {
-            using(var recording=typeof(PetAudio).Assembly.GetManifestResourceStream("Xiaohei.CatAnswer.wav"))
+        if(cue=="cat-answer" || cue=="human-hello" || cue=="human-master") {
+            string resource=cue=="cat-answer"?"Xiaohei.CatAnswer.wav":"Xiaohei."+cue+".wav";
+            using(var recording=typeof(PetAudio).Assembly.GetManifestResourceStream(resource))
                 return ScalePcm(recording,volume);
         }
         int count=(int)Math.Round(duration*SampleRate);

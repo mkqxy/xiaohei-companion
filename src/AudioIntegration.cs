@@ -7,17 +7,40 @@ using System.Windows.Controls;
 namespace XiaoheiDesktop {
 public sealed partial class PetWindow {
     internal readonly PetAudio audio = new PetAudio(Path.Combine(Store.Dir,"sounds"));
+    public event Action<string> SoundCueRequested;
+    public bool CaptureSoundCues {get;set;}
+    string pendingSound;
+    double soundAt;
+
+    void CueAfter(string cue,double delay) {
+        pendingSound=cue;soundAt=art.Clock+delay;
+    }
+    void UpdateSoundCue() {
+        if(pendingSound==null || art.Clock<soundAt)return;
+        string cue=pendingSound;pendingSound=null;
+        if(art.Clock-soundAt<.26)PlaySound(cue);
+    }
+    void ClearActionSound() {
+        pendingSound=null;
+        if(art.ClearMouth())audio.Stop();
+    }
 
     void UpdateAudioSettings() {
         audio.Enabled = Pref.SoundEnabled;
         audio.Volume = Pref.SoundVolume;
         Pref.SoundVolume = audio.Volume;
         audio.Suppressed = Pref.Quiet || Companion.Sleeping || Timer.Running || !IsVisible;
+        if(audio.Suppressed || (!CaptureSoundCues && (!audio.Enabled || audio.Volume==0)))art.ClearMouth();
     }
 
     public bool PlaySound(string cue) {
         UpdateAudioSettings();
-        return audio.Play(cue);
+        if(!audio.Play(cue,false,CaptureSoundCues))return false;
+        if(cue=="cat-answer" || cue=="human-hello" || cue=="human-master") {
+            art.BeginMouth(audio.MouthTrack(cue));
+        }
+        var notify=SoundCueRequested;if(notify!=null)notify(cue);
+        return true;
     }
     void RespondAsCat(string cue) {
         if(!art.HumanForm && !art.UsingCustomSkin)PlaySound(cue);
@@ -60,8 +83,8 @@ public sealed partial class PocketWindow {
         sound.Children.Add(level);
         sound.Children.Add(volume);
         sound.Children.Add(UI.Text("长按小黑听呼噜，散步时安静。", 12, UI.Muted));
-        var cues=new[]{"cat-answer","pet","heyxiu","snack","focus-complete"};
-        var pick=new ComboBox{ItemsSource=new[]{"小黑应声","长按呼噜","嘿咻回应","咬小鱼干","专注结束"},SelectedIndex=0,Margin=new Thickness(0,9,0,0)};
+        var cues=new[]{"cat-answer","human-hello","human-master","pet","heyxiu","snack","focus-complete"};
+        var pick=new ComboBox{ItemsSource=new[]{"猫形应声","人形自我介绍","人形喊师父","长按呼噜","嘿咻回应","咬小鱼干","专注结束"},SelectedIndex=0,Margin=new Thickness(0,9,0,0)};
         AutomationProperties.SetName(pick,"选择互动声音");
         Func<string> selected=delegate{return cues[pick.SelectedIndex];};
         sound.Children.Add(pick);

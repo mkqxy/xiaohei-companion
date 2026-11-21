@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Windows;
 using System.Windows.Media;
 
@@ -17,6 +17,7 @@ public sealed partial class PetWindow {
         Pref.HumanForm = !art.HumanForm;
         art.SetHumanForm(Pref.HumanForm, true);
         UpdateFormLayout(art.HumanForm||art.IsChangingForm);
+        if(Pref.HumanForm && !Timer.Running)CueAfter("human-hello",.52);
         if(art.UsingCustomSkin)
             Say(Pref.HumanForm?"换成人形了，再点「变身」回到你的形象。":"你的形象回来啦。",4,true);
         Save(); RefreshPocket();
@@ -51,7 +52,7 @@ public sealed partial class PetArt {
                      Clock < Math.Min(recallAt,splitAt+AutoRecall)+RecallDuration; }
     }
     internal void CopyFormFrom(PetArt s) {
-        HumanForm=s.HumanForm; GuestIsHeyxiu=s.GuestIsHeyxiu; changedAt=s.changedAt;
+        HumanForm=s.HumanForm; GuestIsHeyxiu=s.GuestIsHeyxiu; changedAt=s.changedAt;CopyActing(s);
         splitAt=s.splitAt; recallAt=s.recallAt; headNapAt=s.headNapAt;
         Array.Copy(s.recallFrom,recallFrom,recallFrom.Length);
     }
@@ -85,7 +86,11 @@ public sealed partial class PetArt {
         return Unit((Clock-splitAt-.37-i*.33)/(.74+i*.065));
     }
     bool DrawFormEffects(DrawingContext dc,SpriteAtlas atlas) {
-        if(HeadNapActive && atlas!=null && !Sleeping) {DrawHeadNap(dc,atlas);return true;}
+        if(atlas!=null && !Sleeping) {
+            if(MasterActive){DrawMasterMeeting(dc,atlas);return true;}
+            if(CatCallActive){DrawCatCall(dc,atlas);return true;}
+            if(HeadNapActive){DrawHeadNap(dc,atlas);return true;}
+        }
         double t=FormProgress;
         bool changing=IsChangingForm;
         bool human=PaintedHuman;

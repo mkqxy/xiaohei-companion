@@ -12,7 +12,7 @@ public sealed partial class PetWindow {
         art.CancelTail();
         PlayAnimation("idle",null);
         art.BeginHeadNap();
-        PlaySound("heyxiu");
+        CueAfter("heyxiu",.18);
     }
 }
 

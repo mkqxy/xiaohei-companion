@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -49,7 +49,7 @@ public sealed partial class PetWindow {
     }
     public void ResumeFocus() {
         if(Timer.Running)return;
-        StopGuestPlay();art.CancelTail();WakeForInteraction();Companion.Sleeping=false;autoSleeping=false;
+        ClearActionSound();art.CancelActing();StopGuestPlay();art.CancelTail();WakeForInteraction();Companion.Sleeping=false;autoSleeping=false;
         art.ClearSnack();animationUntil=0;
         bubble.Visibility=Visibility.Collapsed;bubbleUntil=DateTime.MinValue;
         Timer.Start(DateTime.UtcNow);UpdateAudioSettings();CommitFocus(false);

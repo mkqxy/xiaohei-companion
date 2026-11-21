@@ -45,7 +45,11 @@ public sealed partial class PetArt {
         PaintReferenceEye(d,444,292.5,glanceX,glanceY,blink,true);
 
         Path(d,"M397,310 Q395,314 396,320",null,"#392D24",2.9);
-        if (eating) {
+        if (MouthActive) {
+            double open=MouthAmount;
+            if(open>.04) E(d,399,353,7+6*open,1.2+8*open,"#945D59",HumanEdge,2.2);
+            else Path(d,"M385,352 Q397,356 411,352",null,HumanEdge,2.4);
+        } else if (eating) {
             double size=1.1+Math.Abs(Math.Sin(Clock*5));
             E(d,400,354,3.5+size,size,"#795849",null,0);
         } else if (Animation=="waving"||Animation=="jumping") {

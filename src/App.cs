@@ -147,7 +147,7 @@ public sealed partial class PetWindow : Window {
             if(e.ClickCount==2){pressing=false;art.ReleaseMouseCapture();HandleGesture(gesture);e.Handled=true;return;}
             HandleGesture(gesture);pressing=true;dragging=false;WakeForInteraction();PostponeAmbient();down=PointToScreen(e.GetPosition(this));lastDrag=down;original=new Point(Left,Top);art.CaptureMouse();e.Handled=true;
         };
-        art.MouseMove+=delegate(object s,MouseEventArgs e) { if(!pressing) return; Point p=PointToScreen(e.GetPosition(this));Vector delta=p-down;double dpi=GetDpi();dragging=gestures.Move(delta.Length/dpi);if(dragging) {art.CancelHeadNap();animationUntil=0;double horizontal=p.X-lastDrag.X;if(Math.Abs(horizontal)>=2*dpi){movementDirection=horizontal<0?-1:1;lastDrag=p;}Left=original.X+delta.X/dpi;Top=original.Y+delta.Y/dpi;} };
+        art.MouseMove+=delegate(object s,MouseEventArgs e) { if(!pressing) return; Point p=PointToScreen(e.GetPosition(this));Vector delta=p-down;double dpi=GetDpi();dragging=gestures.Move(delta.Length/dpi);if(dragging) {ClearActionSound();art.CancelActing();art.CancelHeadNap();animationUntil=0;double horizontal=p.X-lastDrag.X;if(Math.Abs(horizontal)>=2*dpi){movementDirection=horizontal<0?-1:1;lastDrag=p;}Left=original.X+delta.X/dpi;Top=original.Y+delta.Y/dpi;} };
         art.MouseLeftButtonUp+=delegate { if(!pressing)return;bool moved=dragging;gestures.Up(clock.Elapsed.TotalSeconds);pressing=false;art.ReleaseMouseCapture();if(moved)FinishPetDrag();dragging=false; };
         art.LostMouseCapture+=delegate {if(pressing||dragging)gestures.Cancel();pressing=false;dragging=false;};
         root.MouseEnter+=delegate { hovered=true;toolbarVisibility.Enter();UpdateToolbar(clock.Elapsed.TotalSeconds); };
@@ -180,21 +180,21 @@ public sealed partial class PetWindow : Window {
         if(gesture.Buddy){HeadNap();return;}
         if(gesture.Kind==PetGestureKind.Hold){PlayAnimation("waiting","爪爪给你，我在这儿呢。");RespondAsCat("pet");return;}
         Companion.Stroke();string line;string animation=reactions.NextTap(out line);PlayAnimation(animation,line);
-        if(animation=="waving")RespondAsCat("cat-answer");
+        if(animation=="waving" && !art.HumanForm && !art.UsingCustomSkin){art.BeginCatCall();CueAfter("cat-answer",.20);}
         Save();RefreshPocket();
     }
     public void QuickRun(){var area=WorkArea();PlayAnimation(Left+Width/2>area.Left+area.Width/2?"running-left":"running-right","跑几步，再回来陪你。");}
     public void Stroke() {WakeForInteraction();string line=Companion.Stroke();reactUntil=clock.Elapsed.TotalSeconds+2.8;if(!Companion.Sleeping){PlayAnimation("waving",line);RespondAsCat("pet");}else Say(line,4,false);Save();RefreshPocket();}
-    public void Feed() {WakeForInteraction();int old=Companion.Snacks;string line=Companion.Feed();if(Companion.Snacks>old&&!Companion.Sleeping){PlayAnimation("waiting",line);art.ServeSnack();PlaySound("snack");}else Say(line,4,false);Save();RefreshPocket();}
+    public void Feed() {WakeForInteraction();int old=Companion.Snacks;string line=Companion.Feed();if(Companion.Snacks>old&&!Companion.Sleeping){PlayAnimation("waiting",line);art.ServeSnack();CueAfter("snack",art.HumanForm?1:.95);}else Say(line,4,false);Save();RefreshPocket();}
     public void Play() {WakeForInteraction();string line=Companion.Play();PlayAnimation("jumping",line);RefreshPocket();}
-    public void Sleep() {StopGuestPlay();art.CancelTail();art.ClearSnack();gestures.CancelPendingTap();autoSleeping=false;WakeForInteraction();PostponeAmbient();Companion.ToggleSleep();UpdateAudioSettings();animationUntil=0;Say(Companion.Sleeping?"安静待一会儿，动作放慢。":"休息好了，继续陪你。",4,false);UpdateToolbar(clock.Elapsed.TotalSeconds);RefreshPocket();}
+    public void Sleep() {ClearActionSound();art.CancelActing();StopGuestPlay();art.CancelTail();art.ClearSnack();gestures.CancelPendingTap();autoSleeping=false;WakeForInteraction();PostponeAmbient();Companion.ToggleSleep();UpdateAudioSettings();animationUntil=0;Say(Companion.Sleeping?"安静待一会儿，动作放慢。":"休息好了，继续陪你。",4,false);UpdateToolbar(clock.Elapsed.TotalSeconds);RefreshPocket();}
     public void Heyxiu(){WakeForInteraction();Pref.ShowHeyxiu=true;heyxiuUntil=clock.Elapsed.TotalSeconds+4;PlayAnimation("waving","小黑和嘿咻一起，嗨！");Save();}
     public void PlayAnimation(string animation,string message){
         StartAnimation(animation,message,false);
     }
     void StartAnimation(string animation,string message,bool automatic){
         animation=SpriteTimeline.Normalize(animation);if(SpriteTimeline.Row(animation)<0)throw new ArgumentException("不支持的动画。");gestures.CancelPendingTap();if(!automatic){WakeForInteraction();Companion.Sleeping=false;autoSleeping=false;}PostponeAmbient();
-        if(!automatic){art.CancelHeadNap();art.ClearSnack();}requestedAnimation=animation;double duration=SpriteTimeline.DurationMs(animation)/1000.0/Profile.animationSpeed;
+        if(!automatic){ClearActionSound();art.CancelActing();art.CancelHeadNap();art.ClearSnack();}requestedAnimation=animation;double duration=SpriteTimeline.DurationMs(animation)/1000.0/Profile.animationSpeed;
         animationUntil=clock.Elapsed.TotalSeconds+(automatic?duration:animation=="running-right"||animation=="running-left"?2.6:animation=="running"||animation=="waiting"||animation=="review"?4:animation=="idle"?1.2:duration*(animation=="waving"?2:1));
         movementDirection=animation=="running-left"?-1:1;stateStarted=clock.Elapsed.TotalSeconds;ActiveAnimation=animation;art.Animation=animation;art.AnimationElapsed=0;art.TrackGaze=false;art.InvalidateVisual();
         if(!String.IsNullOrEmpty(message))Say(message,4,false);UpdateToolbar(clock.Elapsed.TotalSeconds);RefreshPocket();
@@ -231,7 +231,7 @@ public sealed partial class PetWindow : Window {
     public void RefreshPocket(){if(pocket!=null)pocket.RefreshLive();}
     public void Save(){if(!initialized)return;var size=FormWindowSize(art.HumanForm);Pref.X=Left+(Width-size.Width)/2;Pref.Y=PawBaseline-size.Height;Pref.Pets=Companion.Pets;Pref.Snacks=Companion.Snacks;Pref.Affection=Companion.Affection;Store.Write("settings.json",new JavaScriptSerializer().Serialize(Pref));Store.Write("profile.json",Profile.Json());}
     public void SetWater(int minutes,bool announce){Pref.WaterMinutes=minutes;Profile.waterMinutes=minutes;nextWater=minutes>0?DateTime.UtcNow.AddMinutes(minutes):DateTime.MaxValue;Save();if(announce)Say(minutes>0?"每 "+minutes+" 分钟，轻轻提醒你喝水。":"喝水提醒已关闭。",5,true);}
-    public void ToggleVisible(){gestures.CancelPendingTap();if(IsVisible){StopGuestPlay();Hide();}else{Show();ClampToScreen();Say("我在这里。",3,false);}}
+    public void ToggleVisible(){gestures.CancelPendingTap();if(IsVisible){ClearActionSound();art.CancelActing();StopGuestPlay();Hide();}else{Show();ClampToScreen();Say("我在这里。",3,false);}}
     public void Quit(){if(pocket!=null){pocket.FlushNote();if(pocket.HasUnsavedNote){OpenPocket();MessageBox.Show(pocket,"随手记还未保存成功，请先复制备份。\n"+Store.LastError,"随手记需要你留意一下");return;}}Save();Application.Current.Shutdown();}
     void Tick(object sender,EventArgs e){
         var now=DateTime.UtcNow;Companion.Tick(now);UpdateAudioSettings();
@@ -252,9 +252,9 @@ public sealed partial class PetWindow : Window {
         HandleGesture(gestures.Tick(t));UpdateToolbar(t);
         if(!IsVisible&&(pocket==null||!pocket.IsVisible))return;
         UpdateAudioSettings();UpdateCarryMotion(t);art.Clock=t;art.Sleeping=Companion.Sleeping;art.Hovered=hovered;
-        if(tallLayout&&!art.HumanForm&&!art.IsChangingForm)UpdateFormLayout(false);
+        UpdateSoundCue();if(tallLayout&&!art.HumanForm&&!art.MasterActive&&!art.IsChangingForm)UpdateFormLayout(false);
         if(t>expressionUntil)CurrentExpression=PetExpression.Idle;
-        if(t>nextExpression&&CompanionReactions.CanAutoReact(Pref.AutoExpressions,Pref.Quiet,Companion.Sleeping,Timer.Running,hovered,pressing,t<animationUntil||art.HeadNapActive,pocket!=null&&pocket.IsVisible)){StartAnimation(reactions.NextAmbient(random),null,true);}
+        if(t>nextExpression&&CompanionReactions.CanAutoReact(Pref.AutoExpressions,Pref.Quiet,Companion.Sleeping,Timer.Running,hovered,pressing,t<animationUntil||art.HeadNapActive||art.Performing,pocket!=null&&pocket.IsVisible)){StartAnimation(reactions.NextAmbient(random),null,true);}
         art.Expression=CurrentExpression;art.ExpressionAge=t-expressionStart;art.ShowHeyxiu=Pref.ShowHeyxiu;art.HeyxiuReaction=Math.Max(0,(heyxiuUntil-t)/4);
         art.Reaction=Math.Max(0,Math.Min(1,(reactUntil-t)/2.8));art.Eating=false;art.Playing=false;
         if(t>nextBlink){blinkStart=t;nextBlink=t+3+random.NextDouble()*5;}
@@ -264,7 +264,7 @@ public sealed partial class PetWindow : Window {
             art.GazeX+=(gx-art.GazeX)*.13;art.GazeY+=(gy-art.GazeY)*.13;
         }
         bool explicitMove=!pressing&&t<animationUntil&&(requestedAnimation=="running-right"||requestedAnimation=="running-left");
-        bool canRoam=Pref.Roaming && t>=animationUntil && !art.HeadNapActive && !Companion.Sleeping && !Timer.Running &&
+        bool canRoam=Pref.Roaming && t>=animationUntil && !art.HeadNapActive && !art.Performing && !Companion.Sleeping && !Timer.Running &&
             !hovered && !pressing && visitor==null && !art.TailActive && !art.IsChangingForm && (pocket==null || !pocket.IsVisible);
         bool walk=canRoam && roamTime<7;
         if(canRoam)roamTime=(roamTime+dt)%24;
@@ -281,7 +281,7 @@ public sealed partial class PetWindow : Window {
     ContextMenu BuildContext(){
         var m=new ContextMenu{FontFamily=FontFamily,FontSize=14,Background=PetArt.B("#FFFDF7"),Foreground=PetArt.B("#344C3C")};
         Action<string,Action> add=(label,act)=>{var i=new MenuItem{Header=label,Padding=new Thickness(10,6,10,6)};i.Click+=delegate{act();};m.Items.Add(i);};
-        add("变身",ToggleForm);add("尾巴分身",SplitTail);add("皇受",VisitTabby);add("比丢",VisitBidiu);m.Items.Add(new Separator());
+        add("找师父练习",VisitMaster);add("变身",ToggleForm);add("尾巴分身",SplitTail);add("皇受",VisitTabby);add("比丢",VisitBidiu);m.Items.Add(new Separator());
         var size=new MenuItem{Header="桌宠大小"};size.Items.Add(new MenuItem{Header=SizeChooser(),StaysOpenOnClick=true});m.Items.Add(size);
         var dock=new MenuItem{Header="贴住任务栏上沿",IsCheckable=true,IsChecked=Pref.DockToTaskbar};dock.Click+=delegate{SetDocked(dock.IsChecked);};m.Items.Add(dock);
         add("打开小黑的口袋",OpenPocket);add("专注与天气",OpenTools);m.Items.Add(new Separator());
@@ -338,7 +338,7 @@ public sealed partial class PocketWindow:Window {
         var words=UI.Stack();words.VerticalAlignment=VerticalAlignment.Center;Grid.SetColumn(words,1);hero.Children.Add(words);
         words.Children.Add(UI.Heading(pet.Profile.name));words.Children.Add(status);stats.Margin=new Thickness(0,10,0,0);words.Children.Add(stats);page.Children.Add(UI.Card(hero));
         var visits=new UniformGrid{Columns=2};
-        AddAction(visits,"切换形态","猫形 / 人形",pet.ToggleForm);
+        AddAction(visits,"找师父练习","与无限一起接铁环",pet.VisitMaster);AddAction(visits,"切换形态","猫形 / 人形",pet.ToggleForm);
         AddAction(visits,"尾巴分身","放出或召回嘿咻",pet.SplitTail);
         AddAction(visits,"皇受来串门","和小皇一起玩",pet.VisitTabby);
         AddAction(visits,"比丢来串门","和比丢一起玩",pet.VisitBidiu);
@@ -398,7 +398,7 @@ public sealed partial class PocketWindow:Window {
         display.Children.Add(UI.Text("嘿咻和小黑在同一张动画中，一起陪着你。",12,UI.Muted));display.Children.Add(UI.Check("偶尔自己做个小动作",pet.Pref.AutoExpressions,delegate(bool b){pet.Pref.AutoExpressions=b;pet.Profile.autoExpressions=b;pet.Save();}));
         display.Children.Add(UI.Check("贴住任务栏上沿",pet.Pref.DockToTaskbar,pet.SetDocked));display.Children.Add(pet.SizeChooser());page.Children.Add(UI.Card(display));
         var home=UI.Stack();home.Children.Add(UI.Heading("小黑的住处"));home.Children.Add(UI.Text("关闭口袋，小黑会继续陪着你。\n藏起来后，可以从右下角托盘找回来。\n小黑无需联网，随手记只保存在本机。",12,UI.Muted));var hide=UI.Button("暂时藏起小黑",delegate{pet.ToggleVisible();},false);hide.Margin=new Thickness(0,14,0,8);home.Children.Add(hide);var folder=UI.Button("打开本机数据文件夹",delegate{Directory.CreateDirectory(Store.Dir);Process.Start(new ProcessStartInfo{FileName=Store.Dir,UseShellExecute=true});},false);home.Children.Add(folder);page.Children.Add(UI.Card(home));
-        var about=UI.Text("小黑桌面伙伴 3.8\n悬停快捷互动 · 原生动作图集 · 可编辑配置与形象\n非官方同人作品 · 不会自动设置开机启动。",11,UI.Muted);about.LineHeight=21;page.Children.Add(about);var quit=UI.Button("收工，退出小黑",pet.Quit,false);quit.Margin=new Thickness(0,17,0,0);page.Children.Add(quit);
+        var about=UI.Text("小黑桌面伙伴 3.9\n悬停快捷互动 · 原生动作图集 · 可编辑配置与形象\n非官方同人作品 · 不会自动设置开机启动。",11,UI.Muted);about.LineHeight=21;page.Children.Add(about);var quit=UI.Button("收工，退出小黑",pet.Quit,false);quit.Margin=new Thickness(0,17,0,0);page.Children.Add(quit);
     }
     public void RefreshLive(){
         if(roamingControl!=null && roamingControl.IsChecked!=pet.Pref.Roaming)roamingControl.IsChecked=pet.Pref.Roaming;
