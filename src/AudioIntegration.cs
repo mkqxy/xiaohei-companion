@@ -82,7 +82,7 @@ public sealed partial class PocketWindow {
         display();
         sound.Children.Add(level);
         sound.Children.Add(volume);
-        sound.Children.Add(UI.Text("长按小黑听呼噜，散步时安静。", 12, UI.Muted));
+        sound.Children.Add(UI.Text("猫形应声使用实录。伙伴互动默认安静。", 12, UI.Muted));
         var cues=new[]{"cat-answer","human-hello","human-master","pet","heyxiu","snack","focus-complete","tabby-paws","tabby-leaf","bidiu-hop","bidiu-bite","master-sleeve"};
         var pick=new ComboBox{ItemsSource=new[]{"猫形应声","人形自我介绍","人形喊师父","长按呼噜","嘿咻回应","咬小鱼干","专注结束","皇受落爪","皇受扑叶","比丢落地","比丢吃果子","无限衣袖"},SelectedIndex=0,Margin=new Thickness(0,9,0,0)};
         AutomationProperties.SetName(pick,"选择互动声音");
@@ -100,10 +100,10 @@ public sealed partial class PocketWindow {
         },false);
         refresh=delegate {
             bool custom=pet.audio.HasClip(selected()),speech=selected().StartsWith("human-");
-            preview.IsEnabled=custom||!speech;
+            preview.IsEnabled=custom||PetAudio.HasBuiltIn(selected());
             restore.IsEnabled=custom;
-            status.Text=custom?"正在使用你选的录音":speech?"未导入原声，互动时显示台词。":"正在使用内置声音";
-            preview.Content=speech&&!custom?"尚未导入原声":"听听小黑的声音";
+            status.Text=custom?"正在使用你选的录音":speech?"未导入原声，互动时显示台词。":PetAudio.HasBuiltIn(selected())?"正在使用内置声音":"默认安静，可导入自己的录音。";
+            preview.Content=!preview.IsEnabled?"尚未导入录音":"听听小黑的声音";
         };
         var import=UI.Button("换成本地 WAV",delegate {
             var dialog=new Microsoft.Win32.OpenFileDialog{Title="选择 5 秒以内的 16 位 PCM WAV",Filter="WAV 短音效 (*.wav)|*.wav"};

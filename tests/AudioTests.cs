@@ -5,7 +5,7 @@ using XiaoheiDesktop;
 
 public static class AudioTests {
     static int assertions;
-    static readonly string[] Cues={"pet","cat-answer","heyxiu","snack","focus-complete","tabby-paws","tabby-leaf","bidiu-hop","bidiu-bite","master-sleeve"};
+    static readonly string[] Cues={"cat-answer","focus-complete"};
 
     static void Check(bool value,string message) {
         assertions++;
@@ -51,27 +51,27 @@ public static class AudioTests {
             Check(PetAudio.BuildWave(silent,.3)==null,silent+" no longer has a generic announcement");
         Check(typeof(PetAudio).Assembly.GetManifestResourceInfo("Xiaohei.CatAnswer.wav")!=null,"The group executable embeds the actual CC0 kitten call");
         using(var reader=new PetAudio()){
-            foreach(string line in new[]{"human-hello","human-master"}) {
+            foreach(string line in new[]{"human-hello","human-master","pet","heyxiu","snack","tabby-paws","tabby-leaf","bidiu-hop","bidiu-bite","master-sleeve"}) {
                 Check(PetAudio.BuildWave(line,.3)==null,"No synthetic speech is bundled");
                 Check(!reader.Play(line,false,true) && reader.MouthTrack(line).Length==0,"An absent voice cue stays silent");
             }
         }
-        Check(Peak(PetAudio.BuildWave("pet",-1))==0,"Negative volume clamps to silence");
-        Check(Same(PetAudio.BuildWave("pet",4),PetAudio.BuildWave("pet",1)),"Large volume clamps to 100%");
-        Check(Same(PetAudio.BuildWave("pet",Double.NaN),PetAudio.BuildWave("pet",.3)),"NaN volume uses the default");
-        Check(Same(PetAudio.BuildWave("pet",Double.PositiveInfinity),PetAudio.BuildWave("pet",.3)),"Infinite volume uses the default");
+        Check(Peak(PetAudio.BuildWave("focus-complete",-1))==0,"Negative volume clamps to silence");
+        Check(Same(PetAudio.BuildWave("focus-complete",4),PetAudio.BuildWave("focus-complete",1)),"Large volume clamps to 100%");
+        Check(Same(PetAudio.BuildWave("focus-complete",Double.NaN),PetAudio.BuildWave("focus-complete",.3)),"NaN volume uses the default");
+        Check(Same(PetAudio.BuildWave("focus-complete",Double.PositiveInfinity),PetAudio.BuildWave("focus-complete",.3)),"Infinite volume uses the default");
 
         using(var audio=new PetAudio()) {
             Check(audio.Enabled && audio.Volume==.3 && !audio.Suppressed,"Defaults are enabled, soft and unsuppressed");
             audio.Enabled=false;
-            Check(!audio.Play("pet") && !audio.Play("pet",true),"Explicit mute applies to interactions and previews");
+            Check(!audio.Play("cat-answer") && !audio.Play("cat-answer",true),"Explicit mute applies to interactions and previews");
             audio.Enabled=true; audio.Volume=0;
             Check(!audio.Play("jump") && !audio.Play("jump",true),"Zero volume also blocks previews");
             audio.Volume=.3; audio.Suppressed=true;
             foreach(string cue in Cues) Check(!audio.Play(cue),cue+" is silent while suppressed");
             Check(!audio.Play("other",true),"Unknown preview is ignored");
             audio.Dispose();
-            Check(!audio.Play("pet",true),"Disposed audio cannot play");
+            Check(!audio.Play("cat-answer",true),"Disposed audio cannot play");
         }
         string root=Environment.GetEnvironmentVariable("XIAOHEI_DATA_DIR");
         string clip=Path.Combine(root,"voice.wav"), invalid=Path.Combine(root,"broken.wav");
@@ -80,7 +80,7 @@ public static class AudioTests {
             audio.ImportClip("human-master",clip);
             Check(audio.Play("human-master",false,true) && !audio.Play("human-master",false,true),"A personal voice plays once per interaction");
             Check(Array.Exists(audio.MouthTrack("human-master"),v=>v>.2),"The imported recording drives the mouth");
-            Check(!audio.Play("tabby-leaf",false,true),"A nearby contact cannot interrupt a spoken line");
+            Check(!audio.Play("cat-answer",false,true),"A nearby contact cannot interrupt a spoken line");
             audio.RestoreClip("human-master");
             Check(!audio.Play("human-master",true,true),"Removing the clip restores a silent greeting");
             audio.ImportClip("pet",clip);
@@ -92,7 +92,7 @@ public static class AudioTests {
             bool rejected=false;
             try {audio.ImportClip("pet",invalid);}catch(InvalidDataException){rejected=true;}
             Check(rejected && Same(File.ReadAllBytes(saved),File.ReadAllBytes(clip)),"Invalid imports leave the previous custom sound intact");
-            File.WriteAllBytes(invalid,PetAudio.BuildWave("snack",1));
+            File.WriteAllBytes(invalid,PetAudio.BuildWave("focus-complete",1));
             audio.ImportClip("pet",invalid);
             Check(Same(File.ReadAllBytes(saved),File.ReadAllBytes(invalid)),"An existing custom cue can be replaced");
             using(var reopened=new PetAudio(Path.Combine(root,"sounds")))Check(reopened.HasClip("pet"),"Clips persist across sessions");

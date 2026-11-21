@@ -6,7 +6,7 @@ using System.Media;
 using System.Text;
 
 namespace XiaoheiDesktop {
-// Built-in foley is synthesized locally. An optional personal PCM clip can
+// Movement cues are quiet until a recording is imported. A personal PCM clip can
 // replace any single cue without changing the shared application package.
 public sealed class PetAudio : IDisposable {
     const int SampleRate = 22050;
@@ -25,7 +25,7 @@ public sealed class PetAudio : IDisposable {
     public PetAudio(string directory=null) { soundDirectory=directory; }
 
     string ClipPath(string cue) {
-        if(Duration(cue)<=0) throw new ArgumentException("未知的声音。");
+        if(!KnownCue(cue)) throw new ArgumentException("未知的声音。");
         return Path.Combine(soundDirectory,cue+".wav");
     }
     public bool HasClip(string cue) {
@@ -120,7 +120,7 @@ public sealed class PetAudio : IDisposable {
     public bool Play(string cue, bool preview=false,bool capture=false) {
         lock(gate) {
             if(disposed || (!capture && (!enabled || volume<=0)) || (suppressed && !preview)) return false;
-            if(Duration(cue)<=0) return false;
+            if(!KnownCue(cue)) return false;
             double now=clock.Elapsed.TotalSeconds;
             if(!preview && now<speechUntil) return false;
             if(!preview && cue==lastCue && cue!="focus-complete" && now-lastPlayedAt<CooldownSeconds) return false;
@@ -204,100 +204,42 @@ public sealed class PetAudio : IDisposable {
         return Math.Max(0,Math.Min(1,value));
     }
 
-    static double Duration(string cue) {
+    static bool KnownCue(string cue) {
         switch(cue) {
-            case "pet": return 1.16;
-            case "cat-answer": return 1.5; // Length of the embedded clip is read from its header.
-            case "human-hello": return 2.62;
-            case "human-master": return .45;
-            case "heyxiu": return .30;
-            case "tabby-paws": return .26;
-            case "tabby-leaf": return .33;
-            case "bidiu-hop": return .22;
-            case "bidiu-bite": return .28;
-            case "master-sleeve": return .40;
-            case "snack": return .31;
-            case "focus-complete": return .70;
-            default: return 0;
+            case "cat-answer": case "focus-complete": case "human-hello": case "human-master":
+            case "pet": case "heyxiu": case "snack": case "tabby-paws": case "tabby-leaf":
+            case "bidiu-hop": case "bidiu-bite": case "master-sleeve": return true;
+            default: return false;
         }
     }
 
-    // Returns null for an unrecognized cue. The same method is used for
-    // playback, export and waveform checks, including a silent volume of zero.
-    public static byte[] BuildWave(string cue, double volume) {
-        double duration=Duration(cue);
-        if(duration<=0) return null;
+    internal static bool HasBuiltIn(string cue) {
+        return cue=="cat-answer" || cue=="focus-complete";
+    }
+
+    public static byte[] BuildWave(string cue,double volume) {
+        if(!HasBuiltIn(cue)) return null;
         volume=NormalizeVolume(volume);
-        if(cue=="human-hello" || cue=="human-master")return null;
         if(cue=="cat-answer") {
-            const string resource="Xiaohei.CatAnswer.wav";
-            using(var recording=typeof(PetAudio).Assembly.GetManifestResourceStream(resource))
+            using(var recording=typeof(PetAudio).Assembly.GetManifestResourceStream("Xiaohei.CatAnswer.wav"))
                 return ScalePcm(recording,volume);
         }
+        const double duration=.70;
         int count=(int)Math.Round(duration*SampleRate);
         var samples=new double[count];
         double peak=0;
-        uint noise=0x51A0B37;
-        double filteredNoise=0,previousNoise=0,phase=0;
         for(int i=0;i<count;i++) {
             double t=(double)i/SampleRate;
-            double sample=0;
-            noise=unchecked(noise*1664525+1013904223);
-            double random=((noise>>8)/16777215.0)*2-1;
-            previousNoise=filteredNoise;
-            filteredNoise=.89*filteredNoise+.11*random;
-            switch(cue) {
-                case "pet":
-                    // Two uneven breaths of a quiet purr. Pulses excite a soft
-                    // low resonance rather than a pitch sweeping like a UI beep.
-                    double breath=Math.Pow(Math.Abs(Math.Sin(Math.PI*t/.58)),.60);
-                    phase+=(24+2.1*Math.Sin(t*6.8)+.55*Math.Sin(t*22))/SampleRate;
-                    double pulse=Math.Exp(-6.5*(phase-Math.Floor(phase)));
-                    sample=(pulse-.15)*(.48+.23*Math.Cos(2*Math.PI*phase*3)+filteredNoise)*breath;
-                    break;
-                case "heyxiu":
-                    sample=Meow(t,duration,475)*(.92+.08*filteredNoise);
-                    break;
-                case "tabby-paws":
-                case "bidiu-hop":
-                    bool hop=cue=="bidiu-hop";
-                    double pad=Contact(t,.012,.034)+(hop?0:.6*Contact(t,.14,.028));
-                    sample=(Math.Sin(2*Math.PI*(hop?148:194)*t)*.32+filteredNoise)*pad;
-                    break;
-                case "master-sleeve":
-                case "tabby-leaf":
-                    bool leaf=cue=="tabby-leaf";
-                    double brush=Contact(t,.012,leaf?.054:.080)+
-                                 .5*Contact(t,leaf?.097:.145,leaf?.042:.078);
-                    sample=(filteredNoise+(leaf?1.9:.32)*(filteredNoise-previousNoise))*brush;
-                    break;
-                case "bidiu-bite":
-                case "snack":
-                    double crunch=Math.Exp(-Math.Pow((t-.040)/.018,2))+
-                                  .47*Math.Exp(-Math.Pow((t-.173)/.027,2));
-                    sample=(filteredNoise+(cue=="bidiu-bite"?.65:2.2)*(filteredNoise-previousNoise))*crunch;
-                    break;
-                case "focus-complete":
-                    sample=Bell(t,659,.57)*.80+Bell(t-.19,880,.51)*.46;
-                    break;
-            }
             double edge=Math.Max(0,Math.Min(1,Math.Min(t/.009,(duration-t)/.045)));
-            sample*=Math.Sin(edge*Math.PI/2);
-            samples[i]=sample;
-            peak=Math.Max(peak,Math.Abs(sample));
+            samples[i]=(Bell(t,659,.57)*.80+Bell(t-.19,880,.51)*.46)*Math.Sin(edge*Math.PI/2);
+            peak=Math.Max(peak,Math.Abs(samples[i]));
         }
-
-        using(var output=new MemoryStream(44+count*2)) {
-            using(var writer=new BinaryWriter(output,Encoding.ASCII)) {
-                WriteHeader(writer,1,SampleRate,count*2);
-                // Headroom is kept even at 100%. First and last samples are
-                // exactly zero so consecutive short cues do not click.
-                double level=cue=="pet"?.43:cue=="heyxiu" || cue=="focus-complete"?.54:.38;
-                double gain=peak>0 ? level*volume/peak : 0;
-                for(int i=0;i<count;i++)
-                    writer.Write((short)(i==0 || i==count-1 ? 0 : Math.Round(samples[i]*gain*Int16.MaxValue)));
-                return output.ToArray();
-            }
+        using(var output=new MemoryStream(44+count*2))
+        using(var writer=new BinaryWriter(output,Encoding.ASCII)) {
+            WriteHeader(writer,1,SampleRate,count*2);
+            double gain=.54*volume/peak;
+            for(int i=0;i<count;i++) writer.Write((short)(i==0 || i==count-1?0:Math.Round(samples[i]*gain*Int16.MaxValue)));
+            return output.ToArray();
         }
     }
 
@@ -306,29 +248,6 @@ public sealed class PetAudio : IDisposable {
         w.Write(0x20746D66); w.Write(16); w.Write((short)1); w.Write((short)channels);
         w.Write(rate); w.Write(rate*channels*2); w.Write((short)(channels*2)); w.Write((short)16);
         w.Write(0x61746164); w.Write(bytes);
-    }
-
-    static double Meow(double t,double duration,double pitch) {
-        double x=t/duration;
-        double f=pitch+180*Math.Sin(Math.PI*x)-210*x;
-        double phase=2*Math.PI*duration*(pitch*x+
-                     180*(1-Math.Cos(Math.PI*x))/Math.PI-105*x*x);
-        phase+=.045*Math.Sin(2*Math.PI*27*t);
-        double mouth=900+450*Math.Sin(Math.PI*x);
-        double sample=0;
-        for(int harmonic=1;harmonic<=8;harmonic++) {
-            double frequency=f*harmonic;
-            double low=Math.Exp(-Math.Pow((frequency-mouth)/550,2));
-            double high=Math.Exp(-Math.Pow((frequency-(2200-450*x))/700,2));
-            double weight=(.27+low+.48*high)/(harmonic*harmonic*.4+.6);
-            sample+=Math.Sin(phase*harmonic)*weight;
-        }
-        return sample*Math.Pow(Math.Sin(Math.PI*x),.7);
-    }
-
-    static double Contact(double t,double at,double decay) {
-        double x=t-at;
-        return x<0?0:(1-Math.Exp(-x/.008))*Math.Exp(-x/decay);
     }
 
     static double Bell(double t,double frequency,double duration) {
