@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -26,7 +27,14 @@ public sealed class ActionCommand {
     public static bool HasPending {get{try{return Directory.Exists(QueueDirectory)&&Directory.EnumerateFiles(QueueDirectory,"*.json").Any();}catch{return false;}}}
     public void Enqueue(){
         if(SpriteTimeline.Row(animation)<0||message==null||message.Length>160)throw new ArgumentException("Invalid action request.");
-        Directory.CreateDirectory(QueueDirectory);string temp=Path.Combine(QueueDirectory,DateTime.UtcNow.Ticks.ToString("D19",CultureInfo.InvariantCulture)+"-"+Guid.NewGuid().ToString("N")+".tmp"),path=Path.ChangeExtension(temp,"json");File.WriteAllText(temp,new JavaScriptSerializer().Serialize(this),new UTF8Encoding(false));File.Move(temp,path);
+        Directory.CreateDirectory(QueueDirectory);
+        // Windows may report the same UTC tick for several successive commands. The
+        // system-wide performance counter preserves their order within that tick.
+        string stamp=DateTime.UtcNow.Ticks.ToString("D19",CultureInfo.InvariantCulture);
+        string sequence=Stopwatch.GetTimestamp().ToString("D19",CultureInfo.InvariantCulture);
+        string temp=Path.Combine(QueueDirectory,stamp+"-"+sequence+"-"+Guid.NewGuid().ToString("N")+".tmp");
+        File.WriteAllText(temp,new JavaScriptSerializer().Serialize(this),new UTF8Encoding(false));
+        File.Move(temp,Path.ChangeExtension(temp,"json"));
     }
     public static int DispatchPending(Action<ActionCommand> dispatch){
         if(!Directory.Exists(QueueDirectory))return 0;string[] files=Directory.GetFiles(QueueDirectory,"*.json");Array.Sort(files,StringComparer.Ordinal);int dispatched=0;
