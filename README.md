@@ -1,10 +1,10 @@
 # 小黑和嘿咻 · 桌面伙伴
 
-**3.9.2** · Windows 10 / 11 · 个人同人作品
+**3.9.3** · Windows 10 / 11 · 个人同人作品
 
 使用同一份 AI 重绘透明图集，提供 Codex 原生萌宠外观和可独立运行的桌面伙伴。独立版也逐帧播放真实动作，配有动作面板与可编辑配置。
 
-右键小黑选「找师父练习」，无限会伸手接住它。下方演示把独立桌宠的实际动作和右键菜单录成操作回放，再放回草岸池塘桌面，保留了桌面底栏。
+右键小黑选「找师父练习」，无限会伸手接住它，碰到衣袖时能听见轻响。叫来皇受后点它扑叶、再点蹭蹭；点比丢喂果子，咬下时有声音。下方演示把独立桌宠的实际动作和右键菜单录成操作回放，再放回草岸池塘桌面，保留了桌面底栏。
 
 ![小黑、人形与来客的实际动作预览](media/demo.gif)
 
@@ -13,6 +13,8 @@
 ## 下载与更新
 
 **[下载 Windows 桌面版](https://github.com/mkqxy/xiaohei-companion/releases/latest/download/Xiaohei-Windows.zip)** · [下载 Codex 原生外观](https://github.com/mkqxy/xiaohei-companion/releases/latest/download/Xiaohei-Codex-Pet.zip) · [版本说明和源码](https://github.com/mkqxy/xiaohei-companion/releases/latest)
+
+保留的旧版可从 [3.6 原版下载页](https://github.com/mkqxy/xiaohei-companion/releases/tag/v3.6.0) 获取。
 
 给朋友转发的[两页下载与玩法指南（PDF）](https://raw.githubusercontent.com/mkqxy/xiaohei-companion/main/docs/download-guide.pdf)带有固定下载按钮和二维码。
 

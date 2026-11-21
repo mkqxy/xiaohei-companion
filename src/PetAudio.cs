@@ -16,6 +16,7 @@ public sealed class PetAudio : IDisposable {
     readonly Dictionary<string, byte[]> waves = new Dictionary<string, byte[]>();
     readonly string soundDirectory;
     string lastCue;
+    double speechUntil;
     SoundPlayer player;
     MemoryStream stream;
     bool enabled = true, suppressed, disposed;
@@ -121,6 +122,7 @@ public sealed class PetAudio : IDisposable {
             if(disposed || (!capture && (!enabled || volume<=0)) || (suppressed && !preview)) return false;
             if(Duration(cue)<=0) return false;
             double now=clock.Elapsed.TotalSeconds;
+            if(!preview && now<speechUntil) return false;
             if(!preview && cue==lastCue && cue!="focus-complete" && now-lastPlayedAt<CooldownSeconds) return false;
 
             try {
@@ -130,7 +132,9 @@ public sealed class PetAudio : IDisposable {
                     if(wave==null)return false;
                     waves.Add(cue,wave);
                 }
-                if(capture){lastPlayedAt=now;lastCue=cue;return true;}
+                double voiceEnd=cue.StartsWith("human-",StringComparison.Ordinal)
+                    ? now+(double)(wave.Length-44)/BitConverter.ToInt32(wave,28) : 0;
+                if(capture){speechUntil=voiceEnd;lastPlayedAt=now;lastCue=cue;return true;}
                 StopCore();
                 stream=new MemoryStream(wave,false);
                 player=new SoundPlayer(stream);
@@ -138,6 +142,7 @@ public sealed class PetAudio : IDisposable {
                 // WinMM's asynchronous path and never waits for the sound to end.
                 player.Load();
                 player.Play();
+                speechUntil=voiceEnd;
                 lastPlayedAt=now;lastCue=cue;
                 return true;
             } catch(Exception error) {
@@ -175,6 +180,7 @@ public sealed class PetAudio : IDisposable {
     }
 
     void StopCore() {
+        speechUntil=0;
         if(player!=null) {
             try { player.Stop(); } catch(InvalidOperationException) { }
             player.Dispose();
@@ -205,6 +211,11 @@ public sealed class PetAudio : IDisposable {
             case "human-hello": return 2.62;
             case "human-master": return .45;
             case "heyxiu": return .30;
+            case "tabby-paws": return .26;
+            case "tabby-leaf": return .33;
+            case "bidiu-hop": return .22;
+            case "bidiu-bite": return .28;
+            case "master-sleeve": return .40;
             case "snack": return .31;
             case "focus-complete": return .70;
             default: return 0;
@@ -247,10 +258,24 @@ public sealed class PetAudio : IDisposable {
                 case "heyxiu":
                     sample=Meow(t,duration,475)*(.92+.08*filteredNoise);
                     break;
+                case "tabby-paws":
+                case "bidiu-hop":
+                    bool hop=cue=="bidiu-hop";
+                    double pad=Contact(t,.012,.034)+(hop?0:.6*Contact(t,.14,.028));
+                    sample=(Math.Sin(2*Math.PI*(hop?148:194)*t)*.32+filteredNoise)*pad;
+                    break;
+                case "master-sleeve":
+                case "tabby-leaf":
+                    bool leaf=cue=="tabby-leaf";
+                    double brush=Contact(t,.012,leaf?.054:.080)+
+                                 .5*Contact(t,leaf?.097:.145,leaf?.042:.078);
+                    sample=(filteredNoise+(leaf?1.9:.32)*(filteredNoise-previousNoise))*brush;
+                    break;
+                case "bidiu-bite":
                 case "snack":
                     double crunch=Math.Exp(-Math.Pow((t-.040)/.018,2))+
                                   .47*Math.Exp(-Math.Pow((t-.173)/.027,2));
-                    sample=(filteredNoise+2.2*(filteredNoise-previousNoise))*crunch;
+                    sample=(filteredNoise+(cue=="bidiu-bite"?.65:2.2)*(filteredNoise-previousNoise))*crunch;
                     break;
                 case "focus-complete":
                     sample=Bell(t,659,.57)*.80+Bell(t-.19,880,.51)*.46;
@@ -267,7 +292,7 @@ public sealed class PetAudio : IDisposable {
                 WriteHeader(writer,1,SampleRate,count*2);
                 // Headroom is kept even at 100%. First and last samples are
                 // exactly zero so consecutive short cues do not click.
-                double level=cue=="pet"?.43:cue=="snack"?.38:.54;
+                double level=cue=="pet"?.43:cue=="heyxiu" || cue=="focus-complete"?.54:.38;
                 double gain=peak>0 ? level*volume/peak : 0;
                 for(int i=0;i<count;i++)
                     writer.Write((short)(i==0 || i==count-1 ? 0 : Math.Round(samples[i]*gain*Int16.MaxValue)));
@@ -299,6 +324,11 @@ public sealed class PetAudio : IDisposable {
             sample+=Math.Sin(phase*harmonic)*weight;
         }
         return sample*Math.Pow(Math.Sin(Math.PI*x),.7);
+    }
+
+    static double Contact(double t,double at,double decay) {
+        double x=t-at;
+        return x<0?0:(1-Math.Exp(-x/.008))*Math.Exp(-x/decay);
     }
 
     static double Bell(double t,double frequency,double duration) {

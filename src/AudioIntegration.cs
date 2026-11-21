@@ -83,8 +83,8 @@ public sealed partial class PocketWindow {
         sound.Children.Add(level);
         sound.Children.Add(volume);
         sound.Children.Add(UI.Text("长按小黑听呼噜，散步时安静。", 12, UI.Muted));
-        var cues=new[]{"cat-answer","human-hello","human-master","pet","heyxiu","snack","focus-complete"};
-        var pick=new ComboBox{ItemsSource=new[]{"猫形应声","人形自我介绍","人形喊师父","长按呼噜","嘿咻回应","咬小鱼干","专注结束"},SelectedIndex=0,Margin=new Thickness(0,9,0,0)};
+        var cues=new[]{"cat-answer","human-hello","human-master","pet","heyxiu","snack","focus-complete","tabby-paws","tabby-leaf","bidiu-hop","bidiu-bite","master-sleeve"};
+        var pick=new ComboBox{ItemsSource=new[]{"猫形应声","人形自我介绍","人形喊师父","长按呼噜","嘿咻回应","咬小鱼干","专注结束","皇受落爪","皇受扑叶","比丢落地","比丢吃果子","无限衣袖"},SelectedIndex=0,Margin=new Thickness(0,9,0,0)};
         AutomationProperties.SetName(pick,"选择互动声音");
         Func<string> selected=delegate{return cues[pick.SelectedIndex];};
         sound.Children.Add(pick);

@@ -5,7 +5,7 @@ using XiaoheiDesktop;
 
 public static class AudioTests {
     static int assertions;
-    static readonly string[] Cues={"pet","cat-answer","heyxiu","snack","focus-complete"};
+    static readonly string[] Cues={"pet","cat-answer","heyxiu","snack","focus-complete","tabby-paws","tabby-leaf","bidiu-hop","bidiu-bite","master-sleeve"};
 
     static void Check(bool value,string message) {
         assertions++;
@@ -80,6 +80,7 @@ public static class AudioTests {
             audio.ImportClip("human-master",clip);
             Check(audio.Play("human-master",false,true) && !audio.Play("human-master",false,true),"A personal voice plays once per interaction");
             Check(Array.Exists(audio.MouthTrack("human-master"),v=>v>.2),"The imported recording drives the mouth");
+            Check(!audio.Play("tabby-leaf",false,true),"A nearby contact cannot interrupt a spoken line");
             audio.RestoreClip("human-master");
             Check(!audio.Play("human-master",true,true),"Removing the clip restores a silent greeting");
             audio.ImportClip("pet",clip);

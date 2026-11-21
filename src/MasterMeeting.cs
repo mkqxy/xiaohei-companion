@@ -12,7 +12,8 @@ public sealed partial class PetWindow {
         PlayAnimation(art.HumanForm?"waving":"idle",null);
         art.BeginMasterMeeting();
         UpdateFormLayout(true);
-        if(art.HumanForm){Say("师父第一！",2,false);CueAfter("human-master",.76);}
+        if(art.HumanForm){Say("师父第一！",2,false);CueAfter(audio.MouthTrack("human-master").Length>0?"human-master":"master-sleeve",.76);}
+        else CueAfter("master-sleeve",2.06);
     }
 }
 

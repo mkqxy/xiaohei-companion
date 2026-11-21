@@ -106,7 +106,14 @@ public sealed class GuestPlayWindow : Window {
         hit.MouseRightButtonUp += delegate(object sender, MouseButtonEventArgs e) { e.Handled = true; Close(); };
         KeyDown += delegate(object sender, KeyEventArgs e) { if (e.Key == Key.Escape) Close(); };
         Content = hit;
-        Loaded += delegate { clock.Start(); Place(0); timer.Start(); };
+        Loaded += delegate {
+            clock.Start(); Place(0);
+            if (!hunt) {
+                contactCue = kind == GuestKind.Tabby ? "tabby-paws" : "bidiu-hop";
+                contactTime = kind == GuestKind.Tabby ? .75 : Math.PI * 3 / 9;
+            }
+            timer.Start();
+        };
         Closed += delegate { timer.Stop(); clock.Stop(); };
         timer.Interval = TimeSpan.FromMilliseconds(50);
         timer.Tick += delegate { Update(); };
@@ -130,12 +137,12 @@ public sealed class GuestPlayWindow : Window {
                 pet.Say("找到了 " + finds + " / 3！看看另一边。", 4, true);
             }
         } else if(Kind==GuestKind.Bidiu) {
-            contactCue="snack";contactTime=now+.65;
+            contactCue="bidiu-bite";contactTime=now+.60;
             pet.PlayAnimation("review",null);
             pet.Say(art.Interactions%2==1 ? "绿球进肚，毛也变绿啦！" : "一口茄子……紫色的比丢！",3,true);
         } else {
             bool rub=art.Interactions%2==0;
-            contactCue=rub?"pet":null;contactTime=now+.35;
+            contactCue=rub?"pet":"tabby-leaf";contactTime=now+(rub?.37:.62);
             pet.PlayAnimation(rub ? "waiting" : "jumping", null);
             pet.Say(rub ? "小皇又挨过来了。" : "接住啦，小皇！", 3, true);
         }
