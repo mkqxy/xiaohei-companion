@@ -93,11 +93,18 @@ public sealed partial class PocketWindow {
         sound.Children.Add(preview);
         var status=UI.Text("",12,UI.Muted);
         Button restore=null;
-        restore=UI.Button("恢复内置声音",delegate {
-            try { pet.audio.RestoreClip(selected());restore.IsEnabled=false;status.Text="已恢复内置声音"; }
+        Action refresh=null;
+        restore=UI.Button("恢复默认",delegate {
+            try { pet.audio.RestoreClip(selected());refresh(); }
             catch(Exception e) {status.Text="恢复失败："+e.Message;}
         },false);
-        Action refresh=delegate{bool custom=pet.audio.HasClip(selected());restore.IsEnabled=custom;status.Text=custom?"正在使用你选的声音":"正在使用内置声音";};
+        refresh=delegate {
+            bool custom=pet.audio.HasClip(selected()),speech=selected().StartsWith("human-");
+            preview.IsEnabled=custom||!speech;
+            restore.IsEnabled=custom;
+            status.Text=custom?"正在使用你选的录音":speech?"未导入原声，互动时显示台词。":"正在使用内置声音";
+            preview.Content=speech&&!custom?"尚未导入原声":"听听小黑的声音";
+        };
         var import=UI.Button("换成本地 WAV",delegate {
             var dialog=new Microsoft.Win32.OpenFileDialog{Title="选择 5 秒以内的 16 位 PCM WAV",Filter="WAV 短音效 (*.wav)|*.wav"};
             if(dialog.ShowDialog(this)!=true)return;

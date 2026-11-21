@@ -122,13 +122,15 @@ public sealed class PetAudio : IDisposable {
             if(Duration(cue)<=0) return false;
             double now=clock.Elapsed.TotalSeconds;
             if(!preview && cue==lastCue && cue!="focus-complete" && now-lastPlayedAt<CooldownSeconds) return false;
-            if(capture){lastPlayedAt=now;lastCue=cue;return true;}
+
             try {
                 byte[] wave;
                 if(!waves.TryGetValue(cue,out wave)) {
                     wave=LoadWave(cue,volume);
+                    if(wave==null)return false;
                     waves.Add(cue,wave);
                 }
+                if(capture){lastPlayedAt=now;lastCue=cue;return true;}
                 StopCore();
                 stream=new MemoryStream(wave,false);
                 player=new SoundPlayer(stream);
@@ -159,6 +161,7 @@ public sealed class PetAudio : IDisposable {
     // them from the selected recording so replacement speech also lip-syncs.
     public double[] MouthTrack(string cue) {
         byte[] wave=LoadWave(cue,1);
+        if(wave==null)return new double[0];
         int rate=BitConverter.ToInt32(wave,24), channels=BitConverter.ToInt16(wave,22);
         int stride=Math.Max(1,rate/25)*channels*2;
         var levels=new double[(wave.Length-44+stride-1)/stride];
@@ -214,8 +217,9 @@ public sealed class PetAudio : IDisposable {
         double duration=Duration(cue);
         if(duration<=0) return null;
         volume=NormalizeVolume(volume);
-        if(cue=="cat-answer" || cue=="human-hello" || cue=="human-master") {
-            string resource=cue=="cat-answer"?"Xiaohei.CatAnswer.wav":"Xiaohei."+cue+".wav";
+        if(cue=="human-hello" || cue=="human-master")return null;
+        if(cue=="cat-answer") {
+            const string resource="Xiaohei.CatAnswer.wav";
             using(var recording=typeof(PetAudio).Assembly.GetManifestResourceStream(resource))
                 return ScalePcm(recording,volume);
         }

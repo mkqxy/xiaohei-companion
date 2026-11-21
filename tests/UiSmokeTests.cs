@@ -204,7 +204,7 @@ public static class UiSmokeTests {
   pet.Art.Clock=due-.01;dispatch.Invoke(pet,null);
   Check(cueLog.Count==0,"The human waits until the pose is visible");
   pet.Art.Clock=due+.01;dispatch.Invoke(pet,null);dispatch.Invoke(pet,null);
-  Check(cueLog.SequenceEqual(new[]{"human-hello"}),"Speech is dispatched once at the visible keyframe");
+  Check(cueLog.Count==0,"The unvoiced introduction does not emit a sound event");
   pet.VisitMaster();Check((string)Get(pet,"pendingSound")=="human-master","The boy calls his master when they meet");
   pet.PlayAnimation("jumping",null);Check(Get(pet,"pendingSound")==null && !pet.Art.MasterActive,"Changing action discards its old sound and pose");
   pet.ToggleForm();pet.CaptureSoundCues=false;

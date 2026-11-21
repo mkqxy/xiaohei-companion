@@ -17,7 +17,7 @@ public sealed partial class PetWindow {
         Pref.HumanForm = !art.HumanForm;
         art.SetHumanForm(Pref.HumanForm, true);
         UpdateFormLayout(art.HumanForm||art.IsChangingForm);
-        if(Pref.HumanForm && !Timer.Running)CueAfter("human-hello",.52);
+        if(Pref.HumanForm && !Timer.Running){Say("我叫小黑，我也是妖精。",3,false);CueAfter("human-hello",.52);}
         if(art.UsingCustomSkin)
             Say(Pref.HumanForm?"换成人形了，再点「变身」回到你的形象。":"你的形象回来啦。",4,true);
         Save(); RefreshPocket();

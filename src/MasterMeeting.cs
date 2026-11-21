@@ -12,7 +12,7 @@ public sealed partial class PetWindow {
         PlayAnimation(art.HumanForm?"waving":"idle",null);
         art.BeginMasterMeeting();
         UpdateFormLayout(true);
-        if(art.HumanForm)CueAfter("human-master",.76);
+        if(art.HumanForm){Say("师父第一！",2,false);CueAfter("human-master",.76);}
     }
 }
 
@@ -81,7 +81,7 @@ public sealed partial class PetArt {
         DrawMaster(d,t,catchPose,HumanForm);
         d.Pop();d.Pop();
 
-        // The metal ring floats from his wrist. The cat follows its arc,
+        // The cat springs towards his open hand,
         // settles in the crook of his arm, then springs back to the ground.
         double up=Ease((t-1.22)/.84),down=Ease((t-3.55)/.82),held=up*(1-down);
         double arc=Math.Sin(Math.PI*up)+Math.Sin(Math.PI*down);
@@ -108,14 +108,6 @@ public sealed partial class PetArt {
             }
             d.Pop();d.Pop();d.Pop();d.Pop();
             DrawHeyxiuBody(d,new Point(162,196),.43,.94,1,0,0);
-        }
-        double travel=Ease((t-.76)/.52)*(1-Ease((t-3.2)/1.04));
-        if(t>.75 && t<4.25){
-            double ringX=89+37*travel,ringY=64-15*Math.Sin(Math.PI*travel)-5*travel;
-            d.PushTransform(new RotateTransform(-24+87*travel,ringX,ringY));
-            E(d,ringX,ringY,6.8,2.7,null,"#314854",2.4);
-            E(d,ringX,ringY-.5,6.1,2.3,null,"#D5E6E5",1.1);
-            d.Pop();
         }
         d.Pop();d.Pop();
     }

@@ -338,7 +338,7 @@ public sealed partial class PocketWindow:Window {
         var words=UI.Stack();words.VerticalAlignment=VerticalAlignment.Center;Grid.SetColumn(words,1);hero.Children.Add(words);
         words.Children.Add(UI.Heading(pet.Profile.name));words.Children.Add(status);stats.Margin=new Thickness(0,10,0,0);words.Children.Add(stats);page.Children.Add(UI.Card(hero));
         var visits=new UniformGrid{Columns=2};
-        AddAction(visits,"找师父练习","与无限一起接铁环",pet.VisitMaster);AddAction(visits,"切换形态","猫形 / 人形",pet.ToggleForm);
+        AddAction(visits,"找师父练习","跳进师父手心",pet.VisitMaster);AddAction(visits,"切换形态","猫形 / 人形",pet.ToggleForm);
         AddAction(visits,"尾巴分身","放出或召回嘿咻",pet.SplitTail);
         AddAction(visits,"皇受来串门","和小皇一起玩",pet.VisitTabby);
         AddAction(visits,"比丢来串门","和比丢一起玩",pet.VisitBidiu);
@@ -398,7 +398,7 @@ public sealed partial class PocketWindow:Window {
         display.Children.Add(UI.Text("嘿咻和小黑在同一张动画中，一起陪着你。",12,UI.Muted));display.Children.Add(UI.Check("偶尔自己做个小动作",pet.Pref.AutoExpressions,delegate(bool b){pet.Pref.AutoExpressions=b;pet.Profile.autoExpressions=b;pet.Save();}));
         display.Children.Add(UI.Check("贴住任务栏上沿",pet.Pref.DockToTaskbar,pet.SetDocked));display.Children.Add(pet.SizeChooser());page.Children.Add(UI.Card(display));
         var home=UI.Stack();home.Children.Add(UI.Heading("小黑的住处"));home.Children.Add(UI.Text("关闭口袋，小黑会继续陪着你。\n藏起来后，可以从右下角托盘找回来。\n小黑无需联网，随手记只保存在本机。",12,UI.Muted));var hide=UI.Button("暂时藏起小黑",delegate{pet.ToggleVisible();},false);hide.Margin=new Thickness(0,14,0,8);home.Children.Add(hide);var folder=UI.Button("打开本机数据文件夹",delegate{Directory.CreateDirectory(Store.Dir);Process.Start(new ProcessStartInfo{FileName=Store.Dir,UseShellExecute=true});},false);home.Children.Add(folder);page.Children.Add(UI.Card(home));
-        var about=UI.Text("小黑桌面伙伴 3.9.1\n悬停快捷互动 · 原生动作图集 · 可编辑配置与形象\n非官方同人作品 · 不会自动设置开机启动。",11,UI.Muted);about.LineHeight=21;page.Children.Add(about);var quit=UI.Button("收工，退出小黑",pet.Quit,false);quit.Margin=new Thickness(0,17,0,0);page.Children.Add(quit);
+        var about=UI.Text("小黑桌面伙伴 3.9.2\n悬停快捷互动 · 原生动作图集 · 可编辑配置与形象\n非官方同人作品 · 不会自动设置开机启动。",11,UI.Muted);about.LineHeight=21;page.Children.Add(about);var quit=UI.Button("收工，退出小黑",pet.Quit,false);quit.Margin=new Thickness(0,17,0,0);page.Children.Add(quit);
     }
     public void RefreshLive(){
         if(roamingControl!=null && roamingControl.IsChecked!=pet.Pref.Roaming)roamingControl.IsChecked=pet.Pref.Roaming;

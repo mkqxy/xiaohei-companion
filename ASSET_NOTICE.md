@@ -8,9 +8,9 @@
 - `assets/xiaohei/`、`native/xiaohei-heixiu/`、`src/pet.ico` 以及展示这些角色的 `media/` 预览不在代码 MIT 许可的授权范围内。相关角色图像是在用户提供的参考基础上用 AI 生成或绘制的衍生视觉素材。`editor/default-sprite.js` 内嵌的 Base64 图像字节也属于角色素材，不因保存在脚本文件中就取得 MIT 素材授权；编辑器的通用程序逻辑仍按 MIT 复用。`src/PetArt.cs` 中备用绘图的角色造型也不因此获得角色权益的转授权；通用播放、交互和设置代码仍按 MIT 复用。
 - 本项目不声称拥有或能够转授第三方角色权益，也不提供一份未经权利方授予的“商用”或“非商用”角色许可。AI 生成过程不构成角色授权。
 
-- 猫形应声取材自 Luke100000 以 CC0 1.0 发布的幼猫录音。3.9 截取一声自然的幼猫短叫。人形小黑的自我介绍和「师父」由 Windows 通用中文合成语音制作。它们都是为桌宠制作的声音。音源、处理方式及文件说明见 assets/sound/SOURCE.md。[猫叫原始录音](https://freesound.org/people/Luke100000/sounds/476918/) · [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/)
+- 猫形应声取材自 Luke100000 以 CC0 1.0 发布的幼猫录音。3.9 截取一声自然的幼猫短叫。人形台词使用用户导入的本地音频。公开包和公开演示均未收录动画对白。音源、处理方式及文件说明见 assets/sound/SOURCE.md。[猫叫原始录音](https://freesound.org/people/Luke100000/sounds/476918/) · [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/)
 
-- 无限与小黑的接抱是本项目编排的桌宠互动。3.9.1 参考《学前篇》第 43 话的日常造型及石场画面，用 AI 辅助绘制无限和演示场景。角色及其衍生画面的第三方权益归原权利方。[第 43 话正片](https://www.bilibili.com/zh-Hans/bangumi/play/ep6762152) · [番剧角色介绍](https://luoxiaohei-movie.com/tv/character/)
+- 无限与小黑的接抱是本项目编排的桌宠互动。3.9.1 参考《学前篇》第 43 话的日常造型，用 AI 辅助绘制无限；3.9.2 的演示背景取自使用者提供的草岸池塘桌面截图。角色及其衍生画面的第三方权益归原权利方。[第 43 话正片](https://www.bilibili.com/zh-Hans/bangumi/play/ep6762152) · [番剧角色介绍](https://luoxiaohei-movie.com/tv/character/)
 
 - 配乐版演示使用《晚安喵》的自行制作器乐短编，原曲词曲为薄荷映像，原唱为艾索。器乐配乐与原曲均不在代码的 MIT 许可范围内。仓库和源码附件里的演示只保留桌宠互动声。[艾索版试听](https://www.kugou.com/song/2hn30c2.html)
 

@@ -51,12 +51,10 @@ public static class AudioTests {
             Check(PetAudio.BuildWave(silent,.3)==null,silent+" no longer has a generic announcement");
         Check(typeof(PetAudio).Assembly.GetManifestResourceInfo("Xiaohei.CatAnswer.wav")!=null,"The group executable embeds the actual CC0 kitten call");
         using(var reader=new PetAudio()){
-            byte[] hello=PetAudio.BuildWave("human-hello",.3);
-            Check(hello.Length>44100*1.8 && hello.Length<44100*2.5,"The offline introduction contains the complete two-sentence line");
-            Check(Peak(PetAudio.BuildWave("human-master",.3))>2500,"The master greeting is audible");
-            double[] track=reader.MouthTrack("human-hello");
-            Check(Array.Exists(track,x=>x>.2) && Array.Exists(track,x=>x==0),"Speech includes both open mouth and closed mouth frames");
-            Check(reader.Play("human-master",false,true) && !reader.Play("human-master",false,true),"Offline capture follows the same debounce as actual playback");
+            foreach(string line in new[]{"human-hello","human-master"}) {
+                Check(PetAudio.BuildWave(line,.3)==null,"No synthetic speech is bundled");
+                Check(!reader.Play(line,false,true) && reader.MouthTrack(line).Length==0,"An absent voice cue stays silent");
+            }
         }
         Check(Peak(PetAudio.BuildWave("pet",-1))==0,"Negative volume clamps to silence");
         Check(Same(PetAudio.BuildWave("pet",4),PetAudio.BuildWave("pet",1)),"Large volume clamps to 100%");
@@ -79,6 +77,11 @@ public static class AudioTests {
         string clip=Path.Combine(root,"voice.wav"), invalid=Path.Combine(root,"broken.wav");
         File.WriteAllBytes(clip,PetAudio.BuildWave("cat-answer",1));
         using(var audio=new PetAudio(Path.Combine(root,"sounds"))) {
+            audio.ImportClip("human-master",clip);
+            Check(audio.Play("human-master",false,true) && !audio.Play("human-master",false,true),"A personal voice plays once per interaction");
+            Check(Array.Exists(audio.MouthTrack("human-master"),v=>v>.2),"The imported recording drives the mouth");
+            audio.RestoreClip("human-master");
+            Check(!audio.Play("human-master",true,true),"Removing the clip restores a silent greeting");
             audio.ImportClip("pet",clip);
             Check(audio.HasClip("pet")&&!audio.HasClip("snack"),"A replacement is limited to its selected action");
             string saved=Path.Combine(root,"sounds","pet.wav");
